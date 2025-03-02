@@ -43,6 +43,22 @@ MonoBehaviour:
     m_Key: main.btnExit
     m_Metadata:
       m_Items: []
+  - m_Id: 183680069046272
+    m_Key: reg.lblTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 187039773659136
+    m_Key: reg.lblConfirmPass
+    m_Metadata:
+      m_Items: []
+  - m_Id: 188614357323776
+    m_Key: reg.btnSubmit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 188703146545152
+    m_Key: reg.btnCancel
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -46,6 +46,22 @@ MonoBehaviour:
     m_Localized: Exit
     m_Metadata:
       m_Items: []
+  - m_Id: 183680069046272
+    m_Localized: Register User
+    m_Metadata:
+      m_Items: []
+  - m_Id: 187039773659136
+    m_Localized: "Confirm Pass\uFF1A"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 188614357323776
+    m_Localized: Submit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 188703146545152
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: Init
   m_EditorClassIdentifier: 
   startType: 2
+  curLocale: 0

@@ -9,6 +9,7 @@ public class Global : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        config.curLocale= PlayerPrefs.GetInt("curLocale");
         DontDestroyOnLoad(gameObject);
         if (config.startType == Config.StartType.Client)
             SceneManager.LoadScene("Main");
@@ -36,5 +37,10 @@ public class Global : MonoBehaviour
             }
             return instance;
         }
+    }
+
+    private void OnDestroy()
+    {
+        PlayerPrefs.SetInt("curLocale", config.curLocale);
     }
 }
