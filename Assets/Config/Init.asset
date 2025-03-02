@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b4455084481aee4ab653c1df1beee3f, type: 3}
   m_Name: Init
   m_EditorClassIdentifier: 
-  startType: 0
+  startType: 2

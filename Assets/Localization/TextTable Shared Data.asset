@@ -16,11 +16,31 @@ MonoBehaviour:
   m_TableCollectionNameGuidString: e0b3c67719825a94a874394817cdbb91
   m_Entries:
   - m_Id: 21336723456
-    m_Key: test
+    m_Key: main.title
     m_Metadata:
       m_Items: []
-  - m_Id: 98881015808
-    m_Key: test1
+  - m_Id: 139679030874112
+    m_Key: main.btnLogin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 141481990197248
+    m_Key: main.btnReg
+    m_Metadata:
+      m_Items: []
+  - m_Id: 141736764805120
+    m_Key: main.lblUser
+    m_Metadata:
+      m_Items: []
+  - m_Id: 141821053538304
+    m_Key: main.lblPass
+    m_Metadata:
+      m_Items: []
+  - m_Id: 145725241724928
+    m_Key: main.lblLocal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 152567271428096
+    m_Key: main.btnExit
     m_Metadata:
       m_Items: []
   m_Metadata:

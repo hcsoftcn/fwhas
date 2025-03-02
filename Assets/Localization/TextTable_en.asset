@@ -19,11 +19,31 @@ MonoBehaviour:
     m_Items: []
   m_TableData:
   - m_Id: 21336723456
-    m_Localized: test
+    m_Localized: Fansty World Hide And Seek
     m_Metadata:
       m_Items: []
-  - m_Id: 98881015808
-    m_Localized: test1
+  - m_Id: 139679030874112
+    m_Localized: Login
+    m_Metadata:
+      m_Items: []
+  - m_Id: 141481990197248
+    m_Localized: Register
+    m_Metadata:
+      m_Items: []
+  - m_Id: 141736764805120
+    m_Localized: "UserName\uFF1A"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 141821053538304
+    m_Localized: "Password\uFF1A"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 145725241724928
+    m_Localized: "Language\uFF1A"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 152567271428096
+    m_Localized: Exit
     m_Metadata:
       m_Items: []
   references:
