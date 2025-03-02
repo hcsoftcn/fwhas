@@ -1,15 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class Global : MonoBehaviour
 {
+    public Config config;
     private static Global instance;
     // Start is called before the first frame update
     void Start()
     {
         DontDestroyOnLoad(gameObject);
+        if (config.startType == Config.StartType.Client)
+            SceneManager.LoadScene("Main");
+        else if(config.startType == Config.StartType.Host)
+        {
+            NetworkManager.Singleton.StartHost();
+            SceneManager.LoadScene("Main");
+        }
+        else
+            NetworkManager.Singleton.StartServer();
     }
 
     // Update is called once per frame
@@ -27,10 +36,5 @@ public class Global : MonoBehaviour
             }
             return instance;
         }
-    }
-
-    public void ChangeColor(Text text)
-    {
-        text.color = Color.blue;
     }
 }
