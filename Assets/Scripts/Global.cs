@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class Global : NetworkBehaviour
 {
@@ -23,7 +24,21 @@ public class Global : NetworkBehaviour
         else
         {
             NetworkManager.Singleton.StartServer();
+            SceneEventProgressStatus sta=NetworkManager.Singleton.SceneManager.LoadScene("Main", LoadSceneMode.Additive);
+            Debug.Log("loadscene : Main");
+            StartCoroutine(WaitAndPrint(3.0f));
+            
+            
         }
+    }
+
+    IEnumerator WaitAndPrint(float waitTime)
+    {
+        Debug.Log("begin wait");
+        yield return new WaitForSeconds(waitTime); // 等待指定的秒数
+        Debug.Log("end wait");
+        NetworkManager.Singleton.SceneManager.LoadScene("Reg", LoadSceneMode.Additive);
+        Debug.Log("loadscene : Reg");
     }
 
     // Update is called once per frame
