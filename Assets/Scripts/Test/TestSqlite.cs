@@ -12,20 +12,22 @@ public class TestSqlite : MonoBehaviour
         SQLiteConnection connection = new SQLiteConnection(path, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
         // 创建表
-        connection.CreateTable<TestTable>();
+        //connection.CreateTable<TestTable>();
 
         // 插入数据
-        TestTable table = new TestTable
+        UserTbl table = new UserTbl
         {
-            Name = "Example"
+            UserName = "Example",
+            Password = "password",
+            RegDate = System.DateTime.Now
         };
         connection.Insert(table);
 
         // 查询数据
-        var query = connection.Table<TestTable>().Where(v => v.Name == "Example");
+        var query = connection.Table<UserTbl>().Where(v => v.UserName == "Example");
         foreach (var item in query)
         {
-            Debug.Log(item.Name);
+            Debug.Log(item.UserName);
         }
     }
 
@@ -36,9 +38,11 @@ public class TestSqlite : MonoBehaviour
     }
 }
 
-public class TestTable
+public class UserTbl
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string UserName { get; set; }
+    public string Password { get; set; }
+    public System.DateTime RegDate { get; set; }
 }

@@ -1,26 +1,62 @@
+using SQLite4Unity3d;
+using UnityEngine;
 
-public class SqliteDB : IDatabase
+namespace GameDB
 {
-    public bool OpenDB(string db)//打开数据库
+    public class SqliteDB : IDatabase
     {
-        return false;
+        private SQLiteConnection connection;
+        public bool OpenDB()//打开数据库
+        {
+            string path = Application.streamingAssetsPath + "/data.db";
+            connection = new SQLiteConnection(path, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+            return true;
+        }
+
+        public bool RegUser(string username, string password)//注册用户
+        {
+            UserTbl table = new UserTbl
+            {
+                UserName = username,
+                Password = password,
+                RegDate = System.DateTime.Now
+            };
+            int n=connection.Insert(table);
+            if(n>0)
+                return true;
+            else
+                return false;
+        }
+        public bool IsUserExists(string username)//用户存在吗？
+        {
+            var query = connection.Table<UserTbl>().Where(v => v.UserName == username);
+            if (query.Count() > 0)
+                return true;
+            else
+                return false;
+        }
+
+        public bool LoginUser(string username, string password)//登陆用户
+        {
+            var query = connection.Table<UserTbl>().Where(v => v.UserName == username && v.Password == password);
+            if (query.Count() > 0)
+                return true;
+            else
+                return false;
+        }
+        public bool CloseDB()//关闭数据库
+        {
+            connection.Close();
+            return true;
+        }
     }
 
-    public bool RegUser(string username, string password)//注册用户
+    public class UserTbl
     {
-        return false;
-    }
-    public bool IsUserExists(string username)//用户存在吗？
-    {  
-        return false;
-    }
-
-    public bool LoginUser(string username, string password)//登陆用户
-    {
-        return false;
-    }
-    public bool CloseDB()//关闭数据库
-    {
-        return false;
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public System.DateTime RegDate { get; set; }
     }
 }
