@@ -15,6 +15,9 @@ namespace GameDB
 
         public bool RegUser(string username, string password)//×¢²áÓÃ»§
         {
+            if (IsUserExists(username))
+                return false;
+
             UserTbl table = new UserTbl
             {
                 UserName = username,

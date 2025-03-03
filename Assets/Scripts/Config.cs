@@ -7,8 +7,7 @@ public class Config : ScriptableObject
    public enum StartType
    {
         Client,
-        Server,
-        Host
+        Server
     };
 
    public StartType startType;

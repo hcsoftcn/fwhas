@@ -2,7 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class Global : MonoBehaviour
+public class Global : NetworkBehaviour
 {
     public Config config;
     private static Global instance;
@@ -12,14 +12,18 @@ public class Global : MonoBehaviour
         config.curLocale= PlayerPrefs.GetInt("curLocale");
         DontDestroyOnLoad(gameObject);
         if (config.startType == Config.StartType.Client)
-            SceneManager.LoadScene("Main");
-        else if(config.startType == Config.StartType.Host)
         {
-            NetworkManager.Singleton.StartHost();
-            SceneManager.LoadScene("Main");
+            Debug.Log("Start");
+            if (!NetworkManager.Singleton.IsConnectedClient)
+            {
+                NetworkManager.Singleton.StartClient();
+                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
+            }
         }
         else
+        {
             NetworkManager.Singleton.StartServer();
+        }
     }
 
     // Update is called once per frame
@@ -39,8 +43,31 @@ public class Global : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    public override void OnNetworkSpawn()
     {
+        Debug.Log("OnNetworkSpawn");
+
+        base.OnNetworkSpawn();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        Debug.Log("OnNetworkDespawn");
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedCallback;
+        NetworkManager.Singleton.Shutdown();
+
+        base.OnNetworkDespawn();
+    }
+
+    public override void OnDestroy()
+    {
+        Debug.Log("OnDestroy");
         PlayerPrefs.SetInt("curLocale", config.curLocale);
+        base.OnDestroy();
+    }
+
+    void OnClientConnectedCallback(ulong id)
+    {
+        Debug.LogFormat("OnConnected {0}",id);
     }
 }

@@ -1,25 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Unity.Netcode;
 
-public class RegUI : NetworkBehaviour
+public class StartUp : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
     {
-        
+        //Instantiate(NetworkManager.Singleton.NetworkConfig.Prefabs.Prefabs[0].Prefab,Vector3.zero, Quaternion.identity);
     }
 
     // Update is called once per frame
     void Update()
     {
         
-    }
-
-    public void OnBtnCancel()
-    {
-        SceneManager.LoadScene("Main");
     }
 }
