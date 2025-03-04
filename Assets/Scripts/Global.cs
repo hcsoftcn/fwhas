@@ -3,9 +3,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
-public class Global : NetworkBehaviour
+
+public class Global : MonoBehaviour
 {
     public Config config;
+    public string curScene="Main";
     private static Global instance;
     // Start is called before the first frame update
     void Start()
@@ -19,6 +21,7 @@ public class Global : NetworkBehaviour
             {
                 NetworkManager.Singleton.StartClient();
                 NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
+                NetworkManager.Singleton.SceneManager.VerifySceneBeforeLoading += VerifySceneBeforeLoading;
             }
         }
         else
@@ -27,18 +30,19 @@ public class Global : NetworkBehaviour
             SceneEventProgressStatus sta=NetworkManager.Singleton.SceneManager.LoadScene("Main", LoadSceneMode.Additive);
             Debug.Log("loadscene : Main");
             StartCoroutine(WaitAndPrint(3.0f));
-            
-            
         }
     }
 
     IEnumerator WaitAndPrint(float waitTime)
     {
-        Debug.Log("begin wait");
+        //Debug.Log("begin wait");
         yield return new WaitForSeconds(waitTime); // 等待指定的秒数
-        Debug.Log("end wait");
+        //Debug.Log("end wait");
         NetworkManager.Singleton.SceneManager.LoadScene("Reg", LoadSceneMode.Additive);
         Debug.Log("loadscene : Reg");
+        yield return new WaitForSeconds(waitTime);
+        NetworkManager.Singleton.SceneManager.LoadScene("PlayScene", LoadSceneMode.Additive);
+        Debug.Log("loadscene : PlayScene");
     }
 
     // Update is called once per frame
@@ -58,31 +62,28 @@ public class Global : NetworkBehaviour
         }
     }
 
-    public override void OnNetworkSpawn()
-    {
-        Debug.Log("OnNetworkSpawn");
 
-        base.OnNetworkSpawn();
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        Debug.Log("OnNetworkDespawn");
-        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedCallback;
-        NetworkManager.Singleton.Shutdown();
-
-        base.OnNetworkDespawn();
-    }
-
-    public override void OnDestroy()
+    public void OnDestroy()
     {
         Debug.Log("OnDestroy");
         PlayerPrefs.SetInt("curLocale", config.curLocale);
-        base.OnDestroy();
     }
 
     void OnClientConnectedCallback(ulong id)
     {
         Debug.LogFormat("OnConnected {0}",id);
+    }
+
+    bool VerifySceneBeforeLoading(int sceneIndex, string sceneName, LoadSceneMode loadSceneMode)
+    {
+        if(sceneName== curScene) return true;
+        else return false;
+    }
+
+    public void SwitchScene(string sceneName)
+    {
+        SceneManager.UnloadSceneAsync(curScene);
+        curScene = sceneName;
+        Player.Singleton.UpdateScenesServerRpc(NetworkManager.Singleton.LocalClientId);
     }
 }

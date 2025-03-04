@@ -10,7 +10,7 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 
-public class MainUI : NetworkBehaviour
+public class MainUI : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -35,6 +35,14 @@ public class MainUI : NetworkBehaviour
 
     public void OnBtnReg()
     {
-        SceneManager.LoadScene("Reg");
+        //SceneManager.LoadScene("Reg");
+        Debug.Log("OnBtnReg");
+        Global.Singleton.SwitchScene("Reg");
+    }
+
+    public void OnBtnLogin()
+    {
+        Debug.Log("OnBtnLogin");
+        Global.Singleton.SwitchScene("PlayScene");
     }
 }
