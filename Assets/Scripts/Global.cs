@@ -16,7 +16,7 @@ public class Global : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         if (config.startType == Config.StartType.Client)
         {
-            Debug.Log("Start");
+            //Debug.Log("Start");
             if (!NetworkManager.Singleton.IsConnectedClient)
             {
                 NetworkManager.Singleton.StartClient();
@@ -65,7 +65,7 @@ public class Global : MonoBehaviour
 
     public void OnDestroy()
     {
-        Debug.Log("OnDestroy");
+        //Debug.Log("OnDestroy");
         PlayerPrefs.SetInt("curLocale", config.curLocale);
     }
 

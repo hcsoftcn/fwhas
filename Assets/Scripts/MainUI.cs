@@ -36,13 +36,13 @@ public class MainUI : MonoBehaviour
     public void OnBtnReg()
     {
         //SceneManager.LoadScene("Reg");
-        Debug.Log("OnBtnReg");
+        //Debug.Log("OnBtnReg");
         Global.Singleton.SwitchScene("Reg");
     }
 
     public void OnBtnLogin()
     {
-        Debug.Log("OnBtnLogin");
+        //Debug.Log("OnBtnLogin");
         Global.Singleton.SwitchScene("PlayScene");
     }
 }

@@ -18,6 +18,6 @@ public class Area : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log("OnTriggerEnter2D");
+        //Debug.Log("OnTriggerEnter2D");
     }
 }
