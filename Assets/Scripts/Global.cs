@@ -27,6 +27,7 @@ public class Global : MonoBehaviour
         else
         {
             NetworkManager.Singleton.StartServer();
+            NetworkManager.Singleton.SceneManager.SetClientSynchronizationMode(LoadSceneMode.Additive);
             SceneEventProgressStatus sta=NetworkManager.Singleton.SceneManager.LoadScene("Main", LoadSceneMode.Additive);
             Debug.Log("loadscene : Main");
             StartCoroutine(WaitAndPrint(3.0f));
@@ -85,5 +86,6 @@ public class Global : MonoBehaviour
         SceneManager.UnloadSceneAsync(curScene);
         curScene = sceneName;
         Player.Singleton.UpdateScenesServerRpc(NetworkManager.Singleton.LocalClientId);
+        //SceneManager.SetActiveScene(SceneManager.GetSceneByName(curScene));
     }
 }

@@ -10,7 +10,7 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 
-public class MainUI : MonoBehaviour
+public class MainUI : NetworkBehaviour
 {
     // Start is called before the first frame update
     void Start()
