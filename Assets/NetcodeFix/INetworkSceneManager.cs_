@@ -1,0 +1,35 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace Unity.Netcode
+{
+    interface INetworkSceneManager
+    {
+        /// <summary>
+        /// 服务端加载场景
+        /// </summary>
+        /// <param name="sceneName"></param>
+        /// <returns></returns>
+        AsyncOperation SvrLoadScene(string sceneName);
+        /// <summary>
+        /// 服务端卸载场景
+        /// </summary>
+        /// <param name="sceneName"></param>
+        /// <returns></returns>
+        AsyncOperation SvrUnLoadScene(string sceneName);
+        /// <summary>
+        /// 服务端创建新场景并且加载另外一个场景，然后以offset为偏移合并加载的场景到新创建的场景里去。
+        /// </summary>
+        /// <param name="desScene"></param>
+        /// <param name="srcScene"></param>
+        /// <param name="origin"></param>
+        void SvrCreateAndMerageScene(string desScene,string srcScene,Vector3 offset);
+        /// <summary>
+        /// 客户端切换当前场景
+        /// </summary>
+        /// <param name="curScene"></param>
+        void ClientSwitchScene(string curScene);
+    }
+}

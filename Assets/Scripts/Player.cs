@@ -33,7 +33,7 @@ public class Player : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void UpdateScenesServerRpc(ulong id)
     {
-        NetworkManager.Singleton.SceneManager.SynchronizeNetworkObjects(id);
+        //NetworkManager.Singleton.SceneManager.SynchronizeNetworkObjects(id);
         Debug.Log("UpdateScenesServerRpc");
     }
 

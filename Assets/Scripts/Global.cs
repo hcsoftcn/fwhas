@@ -21,14 +21,14 @@ public class Global : MonoBehaviour
             {
                 NetworkManager.Singleton.StartClient();
                 NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
-                NetworkManager.Singleton.SceneManager.VerifySceneBeforeLoading += VerifySceneBeforeLoading;
+                //NetworkManager.Singleton.SceneManager.VerifySceneBeforeLoading += VerifySceneBeforeLoading;
             }
         }
         else
         {
             NetworkManager.Singleton.StartServer();
-            NetworkManager.Singleton.SceneManager.SetClientSynchronizationMode(LoadSceneMode.Additive);
-            SceneEventProgressStatus sta=NetworkManager.Singleton.SceneManager.LoadScene("Main", LoadSceneMode.Additive);
+            //NetworkManager.Singleton.SceneManager.SetClientSynchronizationMode(LoadSceneMode.Additive);
+            //SceneEventProgressStatus sta=NetworkManager.Singleton.SceneManager.LoadScene("Main", LoadSceneMode.Additive);
             Debug.Log("loadscene : Main");
             StartCoroutine(WaitAndPrint(3.0f));
         }
@@ -39,10 +39,10 @@ public class Global : MonoBehaviour
         //Debug.Log("begin wait");
         yield return new WaitForSeconds(waitTime); // 等待指定的秒数
         //Debug.Log("end wait");
-        NetworkManager.Singleton.SceneManager.LoadScene("Reg", LoadSceneMode.Additive);
+        //NetworkManager.Singleton.SceneManager.LoadScene("Reg", LoadSceneMode.Additive);
         Debug.Log("loadscene : Reg");
         yield return new WaitForSeconds(waitTime);
-        NetworkManager.Singleton.SceneManager.LoadScene("PlayScene", LoadSceneMode.Additive);
+        //NetworkManager.Singleton.SceneManager.LoadScene("PlayScene", LoadSceneMode.Additive);
         Debug.Log("loadscene : PlayScene");
     }
 
