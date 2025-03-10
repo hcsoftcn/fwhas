@@ -2,6 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 
 public class Global : MonoBehaviour
@@ -16,34 +17,26 @@ public class Global : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         if (config.startType == Config.StartType.Client)
         {
-            //Debug.Log("Start");
+            
             if (!NetworkManager.Singleton.IsConnectedClient)
             {
+                Debug.Log("Start");
+                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
                 NetworkManager.Singleton.StartClient();
-                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
+                
                 //NetworkManager.Singleton.SceneManager.VerifySceneBeforeLoading += VerifySceneBeforeLoading;
             }
         }
         else
         {
             NetworkManager.Singleton.StartServer();
-            //NetworkManager.Singleton.SceneManager.SetClientSynchronizationMode(LoadSceneMode.Additive);
-            //SceneEventProgressStatus sta=NetworkManager.Singleton.SceneManager.LoadScene("Main", LoadSceneMode.Additive);
-            Debug.Log("loadscene : Main");
-            StartCoroutine(WaitAndPrint(3.0f));
+            Queue<string> scenes = new Queue<string>();
+            scenes.Enqueue("Main");
+            scenes.Enqueue("Reg");
+            scenes.Enqueue("PlayScene");
+            NetworkManager.Singleton.SceneManager.SvrLoadScenes(scenes);
+            NetworkManager.Singleton.SceneManager.SetDefaultScene("Main");
         }
-    }
-
-    IEnumerator WaitAndPrint(float waitTime)
-    {
-        //Debug.Log("begin wait");
-        yield return new WaitForSeconds(waitTime); // 等待指定的秒数
-        //Debug.Log("end wait");
-        //NetworkManager.Singleton.SceneManager.LoadScene("Reg", LoadSceneMode.Additive);
-        Debug.Log("loadscene : Reg");
-        yield return new WaitForSeconds(waitTime);
-        //NetworkManager.Singleton.SceneManager.LoadScene("PlayScene", LoadSceneMode.Additive);
-        Debug.Log("loadscene : PlayScene");
     }
 
     // Update is called once per frame
@@ -70,7 +63,7 @@ public class Global : MonoBehaviour
         PlayerPrefs.SetInt("curLocale", config.curLocale);
     }
 
-    void OnClientConnectedCallback(ulong id)
+    public void OnClientConnected(ulong id)
     {
         Debug.LogFormat("OnConnected {0}",id);
     }

@@ -32,7 +32,10 @@ public class MainUI : NetworkBehaviour
         EditorApplication.isPlaying = false;
         #endif
     }
-
+    public override void OnNetworkSpawn()
+    {
+        Debug.Log("Main UI Spawned");
+    }
     public void OnBtnReg()
     {
         //SceneManager.LoadScene("Reg");

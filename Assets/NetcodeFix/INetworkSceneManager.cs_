@@ -31,5 +31,15 @@ namespace Unity.Netcode
         /// </summary>
         /// <param name="curScene"></param>
         void ClientSwitchScene(string curScene);
+        /// <summary>
+        /// 设置缺省场景
+        /// </summary>
+        /// <param name="defaultScene"></param>
+        void SetDefaultScene(string defaultScene);
+        /// <summary>
+        /// 载入场景列表
+        /// </summary>
+        /// <param name="scenes"></param>
+        void SvrLoadScenes(Queue<string> scenes);
     }
 }
