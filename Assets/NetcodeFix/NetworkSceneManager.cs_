@@ -7,33 +7,79 @@ namespace Unity.Netcode
 {
     enum SceneEventType
     {
-        None,
-        ClientLoad
+        Idle,
+        ClientSceneLoad,
+        ObjectSceneChanged
     }
 
     internal class SceneEventData : IDisposable
     {
-        internal SceneEventType seType;
-        internal ulong targetClientId;
-        internal string sceneName;
-        internal ushort sceneObjectCount;
-        internal List<NetworkObject.SceneObject> sceneObjects;
-
+        internal SceneEventType seType;//事件类型
+        internal ulong targetClientId;//目标客户端id
+        internal string sceneName;//场景名称
+        internal ushort sceneObjectCount;//场景对象计数
+        internal List<NetworkObject.SceneObject> sceneObjects;//场景对象列表
+        internal ushort enterObjectCount;//进入场景的对象数
+        internal List<NetworkObject.SceneObject> enterObjects;//进入场景的对象列表
+        internal ushort leaveObjectCount;//离开场景的对象数
+        internal List<NetworkObject.SceneObject> leaveObjects;//离开场景的对象列表
 
         internal void Serialize(FastBufferWriter writer)
         {
             writer.WriteValueSafe(seType);
             writer.WriteValueSafe(targetClientId);
-            writer.WriteValueSafe(sceneName);
-            SerializeScenePlacedObjects(writer);
+            if (seType == SceneEventType.ClientSceneLoad)
+            {
+                writer.WriteValueSafe(sceneName);
+                SerializeScenePlacedObjects(writer);
+            }
+            if (seType == SceneEventType.ObjectSceneChanged)
+            {
+                writer.WriteValueSafe(enterObjectCount);
+                foreach (var obj in enterObjects)
+                {
+                    obj.Serialize(writer);
+                }
+                writer.WriteValueSafe(leaveObjectCount);
+                foreach (var obj in leaveObjects)
+                {
+                    obj.Serialize(writer);
+                }
+            }
         }
 
         internal void Deserialize(FastBufferReader reader)
         {
             reader.ReadValueSafe(out seType);
             reader.ReadValueSafe(out targetClientId);
-            reader.ReadValueSafe(out sceneName);
-            DeserializeScenePlacedObjects(reader);
+            if (seType == SceneEventType.ClientSceneLoad)
+            {
+                NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.ClientSceneLoad;
+                reader.ReadValueSafe(out sceneName);
+                DeserializeScenePlacedObjects(reader);
+            }
+            if (seType == SceneEventType.ObjectSceneChanged)
+            {
+                NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.ObjectSceneChanged;
+                reader.ReadValueSafe(out enterObjectCount);
+                enterObjects = new List<NetworkObject.SceneObject>();
+                for (int i = 0; i < enterObjectCount; i++)
+                {
+                    NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
+                    obj.Deserialize(reader);
+                    enterObjects.Add(obj);
+                }
+                reader.ReadValueSafe(out leaveObjectCount);
+                leaveObjects = new List<NetworkObject.SceneObject>();
+                for (int i = 0; i < leaveObjectCount; i++)
+                {
+                    NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
+                    obj.Deserialize(reader);
+                    leaveObjects.Add(obj);
+                }
+                if(NetworkManager.Singleton.SceneManager.m_curSceneEvent== SceneEventType.ObjectSceneChanged)
+                    NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.Idle;
+            }
         }
 
         internal void SerializeScenePlacedObjects(FastBufferWriter writer)
@@ -54,9 +100,7 @@ namespace Unity.Netcode
                 {
                     if (!netobj.IsPlayerObject&&(netobj.IsSceneObject==null|| netobj.IsSceneObject ==true))
                     {
-                        //Debug.LogFormat("netobj IsSceneObject {0}", netobj.IsSceneObject);
                         NetworkObject.SceneObject scobj = netobj.GetMessageSceneObject(targetClientId);
-                        //Debug.LogFormat("netobj.scobj IsSceneObject {0}", scobj.IsSceneObject); 
                         scobj.Serialize(writer);
                         count++;
                     }
@@ -79,7 +123,6 @@ namespace Unity.Netcode
             {
                 NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
                 obj.Deserialize(reader);
-                //Debug.LogFormat("DeserializeScenePlacedObjects SceneObject {0}", obj.IsSceneObject);
                 sceneObjects.Add(obj);               
             }
         }
@@ -107,6 +150,10 @@ namespace Unity.Netcode
         private NetworkManager m_networkManager;
 
         private SceneEventData m_SceneEventData;
+
+        internal SceneEventType m_curSceneEvent;//当前场景事件，如果为idle则合适处理一些事情
+
+        internal Dictionary<ulong, string> m_ClientScene = new Dictionary<ulong, string>();//每个客户端的当前场景
         /// <summary>
         /// 缺省的场景
         /// </summary>
@@ -118,8 +165,22 @@ namespace Unity.Netcode
         internal NetworkSceneManager(NetworkManager networkManager)
         {
             m_networkManager = networkManager;
+            m_curSceneEvent = SceneEventType.Idle;
+            m_networkManager.OnClientDisconnectCallback += OnDisconnect;
+            m_networkManager.OnClientConnectedCallback += OnConnect;
         }
 
+        internal void OnDisconnect(ulong id)
+        {
+            m_ClientScene.Remove(id);
+            Debug.LogFormat("Disconnect {0}", id);
+        }
+
+        internal void OnConnect(ulong id)
+        {
+            m_ClientScene.Add(id, m_DefaultScene);
+            Debug.LogFormat("Connect {0}", id);
+        }
         /// <summary>
         /// 这个函数在NetworkObject里的SceneChangedUpdate函数里被调用
         /// </summary>
@@ -166,16 +227,21 @@ namespace Unity.Netcode
         /// <param name="clientId"></param>
         internal void SynchronizeNetworkObjects(ulong clientId)
         {
+            if (!m_networkManager.ConnectedClients[clientId].IsConnected)
+            {
+                m_networkManager.ConnectedClients[clientId].IsConnected = true;
+                m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(clientId);
+            }
+
             SceneEventData seData = new SceneEventData();
-            seData.seType = SceneEventType.ClientLoad;
+            seData.seType = SceneEventType.ClientSceneLoad;
             seData.targetClientId = clientId;
-            seData.sceneName = m_DefaultScene;
+            seData.sceneName = m_ClientScene[clientId];
             var message = new SceneEventMessage
             {
                 EventData = seData
             };
-            NetworkManager.Singleton.ConnectionManager.SendMessage(ref message, NetworkDelivery.ReliableFragmentedSequenced, clientId);
-            //Debug.LogFormat("SynchronizeNetworkObjects for clientId {0}", clientId);
+            m_networkManager.ConnectionManager.SendMessage(ref message, NetworkDelivery.ReliableFragmentedSequenced, clientId);
         }
 
         /// <summary>
@@ -183,7 +249,17 @@ namespace Unity.Netcode
         /// </summary>
         internal void CheckForAndSendNetworkObjectSceneChanged()
         {
+            if(NetworkManager.Singleton.IsServer)
+            {
+                //向客户端发送活动对象进出场景事件
 
+            }
+            else
+            {
+                if (m_curSceneEvent != SceneEventType.Idle) return;//如果当前忙则不做处理
+                //处理接收到的活动对象进出场景事件
+
+            }
         }
 
         /// <summary>
@@ -196,13 +272,21 @@ namespace Unity.Netcode
         }
 
         /// <summary>
-        /// 网络消息处理函数
+        /// 客户端网络消息处理函数
         /// </summary>
         /// <param name="seData"></param>
         internal void HandleSceneEvent(SceneEventData seData)
         {
-            if(seData.seType== SceneEventType.ClientLoad)
+            if (m_networkManager.IsServer) return;
+
+            if(seData.seType== SceneEventType.ClientSceneLoad)
             {
+                if (!m_networkManager.IsConnectedClient)
+                {
+                    m_networkManager.IsConnectedClient = true;
+                    m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(m_networkManager.LocalClientId);
+                }
+                IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
                 m_SceneEventData = seData;
                 AsyncOperation op =SceneManager.LoadSceneAsync(seData.sceneName, LoadSceneMode.Single);
                 op.completed += OnClientSceneLoadComplete;
@@ -216,15 +300,42 @@ namespace Unity.Netcode
                 var networkObject = NetworkManager.Singleton.SpawnManager.CreateLocalNetworkObject(m_SceneEventData.sceneObjects[i]);
                 if (networkObject != null)
                 {
-                    NetworkManager.Singleton.SpawnManager.SpawnNetworkObjectLocally(networkObject, m_SceneEventData.sceneObjects[i], true);
-                    //Debug.LogFormat("Spawn networkObject {0} success", networkObject.NetworkObjectId);
+                    m_networkManager.SpawnManager.SpawnNetworkObjectLocally(networkObject, m_SceneEventData.sceneObjects[i], true);
                     networkObject.InternalInSceneNetworkObjectsSpawned();
+                }
+            }
+            Scene sc = SceneManager.GetSceneByName(m_curLoadScene);
+            MoveObjectsFromDontDestroyOnLoadToScene(sc);
+            IsSpawnedObjectsPendingInDontDestroyOnLoad = false;
+            if(m_curSceneEvent== SceneEventType.ClientSceneLoad)
+                m_curSceneEvent = SceneEventType.Idle;
+        }
+
+        internal void MoveObjectsFromDontDestroyOnLoadToScene(Scene scene)
+        {
+            foreach (var networkObject in m_networkManager.SpawnManager.SpawnedObjectsList)
+            {
+                if (networkObject == null)
+                {
+                    continue;
+                }
+                // If it is in the DDOL then
+                if (networkObject.gameObject.scene == DontDestroyOnLoadScene && !networkObject.DestroyWithScene)
+                {
+                    // only move dynamically spawned network objects, with no parent as child objects will follow,
+                    // back into the currently active scene
+                    if (networkObject.gameObject.transform.parent == null && networkObject.IsSceneObject != null && !networkObject.IsSceneObject.Value)
+                    {
+                        SceneManager.MoveGameObjectToScene(networkObject.gameObject, scene);
+                    }
                 }
             }
         }
 
         public void Dispose()
         {
+            m_networkManager.OnClientDisconnectCallback -= OnDisconnect;
+            m_networkManager.OnClientConnectedCallback -= OnConnect;
         }
 
         public AsyncOperation SvrLoadScene(string sceneName)
@@ -287,7 +398,7 @@ namespace Unity.Netcode
                 {
                     if (!netobj.IsPlayerObject && (netobj.IsSceneObject == null||netobj.IsSceneObject==true))
                     {
-                        NetworkManager.Singleton.SpawnManager.SpawnNetworkObjectLocally(netobj, NetworkManager.Singleton.SpawnManager.GetNetworkObjectId(), true, false, NetworkManager.ServerClientId, true);
+                        m_networkManager.SpawnManager.SpawnNetworkObjectLocally(netobj, m_networkManager.SpawnManager.GetNetworkObjectId(), true, false, NetworkManager.ServerClientId, true);
                         netobj.InternalInSceneNetworkObjectsSpawned();
                         count++;
                     }

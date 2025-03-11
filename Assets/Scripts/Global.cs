@@ -19,12 +19,9 @@ public class Global : MonoBehaviour
         {
             
             if (!NetworkManager.Singleton.IsConnectedClient)
-            {
-                Debug.Log("Start");
-                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            {              
                 NetworkManager.Singleton.StartClient();
-                
-                //NetworkManager.Singleton.SceneManager.VerifySceneBeforeLoading += VerifySceneBeforeLoading;
+                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             }
         }
         else
@@ -68,17 +65,4 @@ public class Global : MonoBehaviour
         Debug.LogFormat("OnConnected {0}",id);
     }
 
-    bool VerifySceneBeforeLoading(int sceneIndex, string sceneName, LoadSceneMode loadSceneMode)
-    {
-        if(sceneName== curScene) return true;
-        else return false;
-    }
-
-    public void SwitchScene(string sceneName)
-    {
-        SceneManager.UnloadSceneAsync(curScene);
-        curScene = sceneName;
-        Player.Singleton.UpdateScenesServerRpc(NetworkManager.Singleton.LocalClientId);
-        //SceneManager.SetActiveScene(SceneManager.GetSceneByName(curScene));
-    }
 }

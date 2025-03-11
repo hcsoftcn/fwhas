@@ -20,6 +20,6 @@ public class RegUI : MonoBehaviour
 
     public void OnBtnCancel()
     {
-        Global.Singleton.SwitchScene("Main");
+        //Global.Singleton.SwitchScene("Main");
     }
 }

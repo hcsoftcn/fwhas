@@ -40,12 +40,12 @@ public class MainUI : NetworkBehaviour
     {
         //SceneManager.LoadScene("Reg");
         //Debug.Log("OnBtnReg");
-        Global.Singleton.SwitchScene("Reg");
+        //Global.Singleton.SwitchScene("Reg");
     }
 
     public void OnBtnLogin()
     {
         //Debug.Log("OnBtnLogin");
-        Global.Singleton.SwitchScene("PlayScene");
+        //Global.Singleton.SwitchScene("PlayScene");
     }
 }
