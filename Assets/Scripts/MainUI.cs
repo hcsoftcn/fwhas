@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
@@ -38,6 +38,7 @@ public class MainUI : NetworkBehaviour
     }
     public void OnBtnReg()
     {
+        //测试中文编码
         //SceneManager.LoadScene("Reg");
         //Debug.Log("OnBtnReg");
         //Global.Singleton.SwitchScene("Reg");

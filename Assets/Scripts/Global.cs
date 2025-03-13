@@ -1,4 +1,4 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
@@ -13,6 +13,7 @@ public class Global : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //测试中文编码
         config.curLocale= PlayerPrefs.GetInt("curLocale");
         DontDestroyOnLoad(gameObject);
         if (config.startType == Config.StartType.Client)
@@ -27,11 +28,9 @@ public class Global : MonoBehaviour
         else
         {
             NetworkManager.Singleton.StartServer();
-            Queue<string> scenes = new Queue<string>();
-            scenes.Enqueue("Main");
-            scenes.Enqueue("Reg");
-            scenes.Enqueue("PlayScene");
-            NetworkManager.Singleton.SceneManager.SvrLoadScenes(scenes);
+            NetworkManager.Singleton.SceneManager.SvrLoadScene("Main");
+            NetworkManager.Singleton.SceneManager.SvrLoadScene("Reg");
+            NetworkManager.Singleton.SceneManager.SvrLoadScene("PlayScene");
             NetworkManager.Singleton.SceneManager.SetDefaultScene("Main");
         }
     }

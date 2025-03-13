@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -8,38 +8,33 @@ namespace Unity.Netcode
     interface INetworkSceneManager
     {
         /// <summary>
-        /// ·şÎñ¶Ë¼ÓÔØ³¡¾°
+        /// æœåŠ¡ç«¯åŠ è½½åœºæ™¯
         /// </summary>
         /// <param name="sceneName"></param>
         /// <returns></returns>
-        AsyncOperation SvrLoadScene(string sceneName);
+        void SvrLoadScene(string sceneName);
         /// <summary>
-        /// ·şÎñ¶ËĞ¶ÔØ³¡¾°
+        /// æœåŠ¡ç«¯å¸è½½åœºæ™¯
         /// </summary>
         /// <param name="sceneName"></param>
         /// <returns></returns>
-        AsyncOperation SvrUnLoadScene(string sceneName);
+        void SvrUnloadScene(string sceneName);
         /// <summary>
-        /// ·şÎñ¶Ë´´½¨ĞÂ³¡¾°²¢ÇÒ¼ÓÔØÁíÍâÒ»¸ö³¡¾°£¬È»ºóÒÔoffsetÎªÆ«ÒÆºÏ²¢¼ÓÔØµÄ³¡¾°µ½ĞÂ´´½¨µÄ³¡¾°ÀïÈ¥¡£
+        /// æœåŠ¡ç«¯åˆ›å»ºæ–°åœºæ™¯å¹¶ä¸”åŠ è½½å¦å¤–ä¸€ä¸ªåœºæ™¯ï¼Œç„¶åä»¥offsetä¸ºåç§»åˆå¹¶åŠ è½½çš„åœºæ™¯åˆ°æ–°åˆ›å»ºçš„åœºæ™¯é‡Œå»ã€‚
         /// </summary>
         /// <param name="desScene"></param>
         /// <param name="srcScene"></param>
         /// <param name="origin"></param>
         void SvrCreateAndMerageScene(string desScene,string srcScene,Vector3 offset);
         /// <summary>
-        /// ¿Í»§¶ËÇĞ»»µ±Ç°³¡¾°
+        /// å®¢æˆ·ç«¯åˆ‡æ¢å½“å‰åœºæ™¯
         /// </summary>
         /// <param name="curScene"></param>
         void ClientSwitchScene(string curScene);
         /// <summary>
-        /// ÉèÖÃÈ±Ê¡³¡¾°
+        /// è®¾ç½®ç¼ºçœåœºæ™¯
         /// </summary>
         /// <param name="defaultScene"></param>
         void SetDefaultScene(string defaultScene);
-        /// <summary>
-        /// ÔØÈë³¡¾°ÁĞ±í
-        /// </summary>
-        /// <param name="scenes"></param>
-        void SvrLoadScenes(Queue<string> scenes);
     }
 }

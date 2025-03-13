@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -8,21 +8,23 @@ namespace Unity.Netcode
     enum SceneEventType
     {
         Idle,
-        ClientSceneLoad,
-        ObjectSceneChanged
+        SvrSceneLoad,//æœåŠ¡ç«¯äº‹ä»¶
+        SvrSceneUnload,//æœåŠ¡ç«¯äº‹ä»¶
+        ClientSceneLoad,//å®¢æˆ·ç«¯äº‹ä»¶
+        ObjectSceneChanged//å®¢æˆ·ç«¯äº‹ä»¶
     }
 
     internal class SceneEventData : IDisposable
     {
-        internal SceneEventType seType;//ÊÂ¼şÀàĞÍ
-        internal ulong targetClientId;//Ä¿±ê¿Í»§¶Ëid
-        internal string sceneName;//³¡¾°Ãû³Æ
-        internal ushort sceneObjectCount;//³¡¾°¶ÔÏó¼ÆÊı
-        internal List<NetworkObject.SceneObject> sceneObjects;//³¡¾°¶ÔÏóÁĞ±í
-        internal ushort enterObjectCount;//½øÈë³¡¾°µÄ¶ÔÏóÊı
-        internal List<NetworkObject.SceneObject> enterObjects;//½øÈë³¡¾°µÄ¶ÔÏóÁĞ±í
-        internal ushort leaveObjectCount;//Àë¿ª³¡¾°µÄ¶ÔÏóÊı
-        internal List<NetworkObject.SceneObject> leaveObjects;//Àë¿ª³¡¾°µÄ¶ÔÏóÁĞ±í
+        internal SceneEventType seType;//äº‹ä»¶ç±»å‹
+        internal ulong targetClientId;//ç›®æ ‡å®¢æˆ·ç«¯id
+        internal string sceneName;//åœºæ™¯åç§°
+        internal ushort sceneObjectCount;//åœºæ™¯å¯¹è±¡è®¡æ•°
+        internal List<NetworkObject.SceneObject> sceneObjects;//åœºæ™¯å¯¹è±¡åˆ—è¡¨
+        internal ushort enterObjectCount;//è¿›å…¥åœºæ™¯çš„å¯¹è±¡æ•°
+        internal ushort leaveObjectCount;//ç¦»å¼€åœºæ™¯çš„å¯¹è±¡æ•°
+        internal Queue<NetworkObject.SceneObject> enterQue;
+        internal Queue<NetworkObject.SceneObject> leaveQue;
 
         internal void Serialize(FastBufferWriter writer)
         {
@@ -36,12 +38,12 @@ namespace Unity.Netcode
             if (seType == SceneEventType.ObjectSceneChanged)
             {
                 writer.WriteValueSafe(enterObjectCount);
-                foreach (var obj in enterObjects)
+                foreach (var obj in enterQue)
                 {
                     obj.Serialize(writer);
                 }
                 writer.WriteValueSafe(leaveObjectCount);
-                foreach (var obj in leaveObjects)
+                foreach (var obj in leaveQue)
                 {
                     obj.Serialize(writer);
                 }
@@ -62,20 +64,20 @@ namespace Unity.Netcode
             {
                 NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.ObjectSceneChanged;
                 reader.ReadValueSafe(out enterObjectCount);
-                enterObjects = new List<NetworkObject.SceneObject>();
+                enterQue = new Queue<NetworkObject.SceneObject>();
                 for (int i = 0; i < enterObjectCount; i++)
                 {
                     NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
                     obj.Deserialize(reader);
-                    enterObjects.Add(obj);
+                    enterQue.Enqueue(obj);
                 }
                 reader.ReadValueSafe(out leaveObjectCount);
-                leaveObjects = new List<NetworkObject.SceneObject>();
+                leaveQue = new Queue<NetworkObject.SceneObject>();
                 for (int i = 0; i < leaveObjectCount; i++)
                 {
                     NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
                     obj.Deserialize(reader);
-                    leaveObjects.Add(obj);
+                    leaveQue.Enqueue(obj);
                 }
                 if(NetworkManager.Singleton.SceneManager.m_curSceneEvent== SceneEventType.ObjectSceneChanged)
                     NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.Idle;
@@ -135,15 +137,15 @@ namespace Unity.Netcode
     public class NetworkSceneManager : INetworkSceneManager, IDisposable
     {
         /// <summary>
-        /// Õâ¸ö²ÎÊıÔÚNetworkSpawnManagerÀïµÄCreateLocalNetworkObjectº¯ÊıÀï±»Ê¹ÓÃ£¬¾ö¶¨ÁËSpawnµÄÓÎÏ·¶ÔÏóÊÇ·ñÔÚDDOL¡£
+        /// è¿™ä¸ªå‚æ•°åœ¨NetworkSpawnManageré‡Œçš„CreateLocalNetworkObjectå‡½æ•°é‡Œè¢«ä½¿ç”¨ï¼Œå†³å®šäº†Spawnçš„æ¸¸æˆå¯¹è±¡æ˜¯å¦åœ¨DDOLã€‚
         /// </summary>
         internal  static bool  IsSpawnedObjectsPendingInDontDestroyOnLoad;
         /// <summary>
-        /// Õâ¸ö²ÎÊıÔÚNetworkObjectÀïµÄSceneChangedUpdateÀï±»µ÷ÓÃ£¬ÓÃÓÚ½«¿Í»§¶Ë³¡¾°¾ä±ú×ª»»Îª·şÎñ¶Ë³¡¾°¾ä±ú
+        /// è¿™ä¸ªå‚æ•°åœ¨NetworkObjecté‡Œçš„SceneChangedUpdateé‡Œè¢«è°ƒç”¨ï¼Œç”¨äºå°†å®¢æˆ·ç«¯åœºæ™¯å¥æŸ„è½¬æ¢ä¸ºæœåŠ¡ç«¯åœºæ™¯å¥æŸ„
         /// </summary>
         internal Dictionary<int, int> ClientSceneHandleToServerSceneHandle = new Dictionary<int, int>();
         /// <summary>
-        /// Õâ¸ö²ÎÊıÔÚNetworkSpawnManagerÀïµÄServerDestroySpawnedSceneObjectsÀï±»µ÷ÓÃ
+        /// è¿™ä¸ªå‚æ•°åœ¨NetworkSpawnManageré‡Œçš„ServerDestroySpawnedSceneObjectsé‡Œè¢«è°ƒç”¨
         /// </summary>
         internal Scene DontDestroyOnLoadScene;
 
@@ -151,16 +153,34 @@ namespace Unity.Netcode
 
         private SceneEventData m_SceneEventData;
 
-        internal SceneEventType m_curSceneEvent;//µ±Ç°³¡¾°ÊÂ¼ş£¬Èç¹ûÎªidleÔòºÏÊÊ´¦ÀíÒ»Ğ©ÊÂÇé
+        internal SceneEventType m_curSceneEvent;//å½“å‰åœºæ™¯äº‹ä»¶ï¼Œå¦‚æœä¸ºidleåˆ™åˆé€‚å¤„ç†ä¸€äº›äº‹æƒ…(æ³¨æ„ï¼šæœåŠ¡ç«¯å’Œå®¢æˆ·ç«¯å…·å¤‡ä¸åŒçš„äº‹ä»¶)
 
-        internal Dictionary<ulong, string> m_ClientScene = new Dictionary<ulong, string>();//Ã¿¸ö¿Í»§¶ËµÄµ±Ç°³¡¾°
+        internal Dictionary<ulong, string> m_ClientScenes = new Dictionary<ulong, string>();//æ¯ä¸ªå®¢æˆ·ç«¯çš„å½“å‰åœºæ™¯
+        
+        internal struct SceneChangeItem
+        {
+            internal int sceneHandle;
+            internal string sceneName;
+            internal Queue<NetworkObject.SceneObject> enterQue;
+            internal Queue<NetworkObject.SceneObject> leaveQue;
+        }
+        
+        internal Dictionary<int, SceneChangeItem> m_ObjectChangeScene = new Dictionary<int, SceneChangeItem>();//æ¯ä¸ªåœºæ™¯çš„
+        internal Dictionary<int, string> m_SceneHandleToName = new Dictionary<int, string>();//åœºæ™¯å¥æŸ„åˆ°åœºæ™¯åç§°çš„æ˜ å°„
         /// <summary>
-        /// È±Ê¡µÄ³¡¾°
+        /// ç¼ºçœçš„åœºæ™¯
         /// </summary>
         private string m_DefaultScene;
 
-        private Queue<string> m_scenesForLoad;
+        internal struct ServerSceneEvent
+        {
+            internal bool IsForLoad;
+            internal string sceneName;
+        }
+
+        private Queue<ServerSceneEvent> m_sceneEvent=new Queue<ServerSceneEvent>();
         private string m_curLoadScene;
+        private string m_curUnloadScene;
 
         internal NetworkSceneManager(NetworkManager networkManager)
         {
@@ -172,17 +192,17 @@ namespace Unity.Netcode
 
         internal void OnDisconnect(ulong id)
         {
-            m_ClientScene.Remove(id);
+            m_ClientScenes.Remove(id);
             Debug.LogFormat("Disconnect {0}", id);
         }
 
         internal void OnConnect(ulong id)
         {
-            m_ClientScene.Add(id, m_DefaultScene);
+            m_ClientScenes.Add(id, m_DefaultScene);
             Debug.LogFormat("Connect {0}", id);
         }
         /// <summary>
-        /// Õâ¸öº¯ÊıÔÚNetworkObjectÀïµÄSceneChangedUpdateº¯ÊıÀï±»µ÷ÓÃ
+        /// è¿™ä¸ªå‡½æ•°åœ¨NetworkObjecté‡Œçš„SceneChangedUpdateå‡½æ•°é‡Œè¢«è°ƒç”¨
         /// </summary>
         /// <param name="networkObject"></param>
         internal void NotifyNetworkObjectSceneChanged(NetworkObject networkObject)
@@ -191,8 +211,26 @@ namespace Unity.Netcode
         }
 
         /// <summary>
-        /// Õâ¸öº¯ÊıÔÚNetworkSpawnManagerÀïµÄHasPrefabÀï±»µ÷ÓÃ
-        /// Õâ¸öº¯ÊıÔÚNetworkSpawnManagerÀïµÄCreateLocalNetworkObjectÀï±»µ÷ÓÃ
+        /// è¿™ä¸ªå‡½æ•°åœ¨NetworkManagerçš„NetworkUpdateStage.PostLateUpdateçŠ¶æ€ä¸‹è¢«è°ƒç”¨
+        /// </summary>
+        internal void CheckForAndSendNetworkObjectSceneChanged()
+        {
+            if (NetworkManager.Singleton.IsServer)
+            {
+                //å‘å®¢æˆ·ç«¯å‘é€æ´»åŠ¨å¯¹è±¡è¿›å‡ºåœºæ™¯äº‹ä»¶
+
+            }
+            else
+            {
+                if (m_curSceneEvent != SceneEventType.Idle) return;//å¦‚æœå½“å‰å¿™åˆ™ä¸åšå¤„ç†
+                //å¤„ç†æ¥æ”¶åˆ°çš„æ´»åŠ¨å¯¹è±¡è¿›å‡ºåœºæ™¯äº‹ä»¶
+
+            }
+        }
+
+        /// <summary>
+        /// è¿™ä¸ªå‡½æ•°åœ¨NetworkSpawnManageré‡Œçš„HasPrefabé‡Œè¢«è°ƒç”¨
+        /// è¿™ä¸ªå‡½æ•°åœ¨NetworkSpawnManageré‡Œçš„CreateLocalNetworkObjecté‡Œè¢«è°ƒç”¨
         /// </summary>
         /// <param name="globalObjectIdHash"></param>
         /// <param name="networkSceneHandle"></param>
@@ -210,7 +248,7 @@ namespace Unity.Netcode
         }
 
         /// <summary>
-        /// Õâ¸öº¯ÊıÔÚCreateObjectMessageÀïµÄHandleº¯ÊıÀï±»µ÷ÓÃ
+        /// è¿™ä¸ªå‡½æ•°åœ¨CreateObjectMessageé‡Œçš„Handleå‡½æ•°é‡Œè¢«è°ƒç”¨
         /// </summary>
         /// <param name="senderId"></param>
         /// <param name="messageSize"></param>
@@ -222,7 +260,7 @@ namespace Unity.Netcode
         }
 
         /// <summary>
-        /// Õâ¸öº¯ÊıÔÚNetworkCoonnectionManagerµÄHandleConnectionApprovalº¯ÊıÀï±»µ÷ÓÃ
+        /// è¿™ä¸ªå‡½æ•°åœ¨NetworkCoonnectionManagerçš„HandleConnectionApprovalå‡½æ•°é‡Œè¢«è°ƒç”¨
         /// </summary>
         /// <param name="clientId"></param>
         internal void SynchronizeNetworkObjects(ulong clientId)
@@ -236,7 +274,7 @@ namespace Unity.Netcode
             SceneEventData seData = new SceneEventData();
             seData.seType = SceneEventType.ClientSceneLoad;
             seData.targetClientId = clientId;
-            seData.sceneName = m_ClientScene[clientId];
+            seData.sceneName = m_ClientScenes[clientId];
             var message = new SceneEventMessage
             {
                 EventData = seData
@@ -245,25 +283,7 @@ namespace Unity.Netcode
         }
 
         /// <summary>
-        /// Õâ¸öº¯ÊıÔÚNetworkManagerµÄNetworkUpdateStage.PostLateUpdate×´Ì¬ÏÂ±»µ÷ÓÃ
-        /// </summary>
-        internal void CheckForAndSendNetworkObjectSceneChanged()
-        {
-            if(NetworkManager.Singleton.IsServer)
-            {
-                //Ïò¿Í»§¶Ë·¢ËÍ»î¶¯¶ÔÏó½ø³ö³¡¾°ÊÂ¼ş
-
-            }
-            else
-            {
-                if (m_curSceneEvent != SceneEventType.Idle) return;//Èç¹ûµ±Ç°Ã¦Ôò²»×ö´¦Àí
-                //´¦Àí½ÓÊÕµ½µÄ»î¶¯¶ÔÏó½ø³ö³¡¾°ÊÂ¼ş
-
-            }
-        }
-
-        /// <summary>
-        /// Õâ¸öº¯ÊıÔÚCreateObjectMessageÀïµÄHandleº¯ÊıÀï±»µ÷ÓÃ
+        /// è¿™ä¸ªå‡½æ•°åœ¨CreateObjectMessageé‡Œçš„Handleå‡½æ•°é‡Œè¢«è°ƒç”¨
         /// </summary>
         /// <returns></returns>
         internal bool ShouldDeferCreateObject()
@@ -272,24 +292,30 @@ namespace Unity.Netcode
         }
 
         /// <summary>
-        /// ¿Í»§¶ËÍøÂçÏûÏ¢´¦Àíº¯Êı
+        /// å®¢æˆ·ç«¯ç½‘ç»œæ¶ˆæ¯å¤„ç†å‡½æ•°
         /// </summary>
         /// <param name="seData"></param>
         internal void HandleSceneEvent(SceneEventData seData)
         {
-            if (m_networkManager.IsServer) return;
-
-            if(seData.seType== SceneEventType.ClientSceneLoad)
+            if (m_networkManager.IsServer)
             {
-                if (!m_networkManager.IsConnectedClient)
+
+            }
+            else
+            {
+                if (seData.seType == SceneEventType.ClientSceneLoad)
                 {
-                    m_networkManager.IsConnectedClient = true;
-                    m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(m_networkManager.LocalClientId);
+                    if (!m_networkManager.IsConnectedClient)
+                    {
+                        m_networkManager.IsConnectedClient = true;
+                        m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(m_networkManager.LocalClientId);
+                    }
+                    IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
+                    m_SceneEventData = seData;
+                    m_curLoadScene = seData.sceneName;
+                    AsyncOperation op = SceneManager.LoadSceneAsync(m_curLoadScene, LoadSceneMode.Single);
+                    op.completed += OnClientSceneLoadComplete;
                 }
-                IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
-                m_SceneEventData = seData;
-                AsyncOperation op =SceneManager.LoadSceneAsync(seData.sceneName, LoadSceneMode.Single);
-                op.completed += OnClientSceneLoadComplete;
             }
         }
 
@@ -307,7 +333,8 @@ namespace Unity.Netcode
             Scene sc = SceneManager.GetSceneByName(m_curLoadScene);
             MoveObjectsFromDontDestroyOnLoadToScene(sc);
             IsSpawnedObjectsPendingInDontDestroyOnLoad = false;
-            if(m_curSceneEvent== SceneEventType.ClientSceneLoad)
+
+            if (m_curSceneEvent== SceneEventType.ClientSceneLoad)
                 m_curSceneEvent = SceneEventType.Idle;
         }
 
@@ -338,15 +365,29 @@ namespace Unity.Netcode
             m_networkManager.OnClientConnectedCallback -= OnConnect;
         }
 
-        public AsyncOperation SvrLoadScene(string sceneName)
+        public bool IsIdle()
         {
-            AsyncOperation op = SceneManager.LoadSceneAsync(sceneName,LoadSceneMode.Additive);
-            return op;
+            return (m_curSceneEvent == SceneEventType.Idle && m_sceneEvent.Count == 0);
         }
 
-        public AsyncOperation SvrUnLoadScene(string sceneName)
+        public void SvrLoadScene(string sceneName)
         {
-            return null;
+            ServerSceneEvent ssEvent = new ServerSceneEvent();
+            ssEvent.IsForLoad = true;
+            ssEvent.sceneName = sceneName;
+            m_sceneEvent.Enqueue(ssEvent);
+            if (m_sceneEvent.Count > 1) return;
+            ProcessServerSceneEvent();
+        }
+
+        public void SvrUnloadScene(string sceneName)
+        {
+            ServerSceneEvent ssEvent = new ServerSceneEvent();
+            ssEvent.IsForLoad = false;
+            ssEvent.sceneName = sceneName;
+            m_sceneEvent.Enqueue(ssEvent);
+            if (m_sceneEvent.Count > 1) return;
+            ProcessServerSceneEvent();
         }
 
         public void SvrCreateAndMerageScene(string desScene, string srcScene, Vector3 offset)
@@ -363,25 +404,95 @@ namespace Unity.Netcode
         {
             m_DefaultScene = defaultScene;
         }
-
-        public void SvrLoadScenes(Queue<string> scenes)
+        
+        private void OnProcessServerSceneEventEnd()
         {
-            if (scenes.Count==0) return;
-            m_scenesForLoad = scenes;
-            m_curLoadScene = m_scenesForLoad.Dequeue();
-            AsyncOperation op = SvrLoadScene(m_curLoadScene);
-            op.completed += OnSvrSceneLoadComplete;
+            //ç”Ÿæˆå¥æŸ„å’Œåœºæ™¯åç§°çš„æ˜ å°„å­—å…¸
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                Scene sc = SceneManager.GetSceneAt(i);
+                if (!m_SceneHandleToName.ContainsKey(sc.handle))
+                    m_SceneHandleToName.Add(sc.handle, sc.name);
+            }
+        }
+
+        private void ProcessServerSceneEvent()
+        {
+            if (m_sceneEvent.Count == 0)
+            {
+                m_curSceneEvent = SceneEventType.Idle;
+                OnProcessServerSceneEventEnd();
+                return;
+            }
+
+            if (m_curSceneEvent != SceneEventType.Idle)
+                return;
+
+            
+            bool bFailed;
+            do
+            {
+                ServerSceneEvent ssEvent = m_sceneEvent.Peek();
+                bFailed = false;
+                if (ssEvent.IsForLoad)
+                {
+                    try
+                    {
+                        m_curSceneEvent = SceneEventType.SvrSceneLoad;
+                        m_curLoadScene = ssEvent.sceneName;
+                        AsyncOperation op = SceneManager.LoadSceneAsync(ssEvent.sceneName, LoadSceneMode.Additive);
+                        op.completed += OnSvrSceneLoadComplete;
+                        return;
+                    }
+                    catch (SystemException e)
+                    {
+                        Debug.Log(string.Format("LoadScene {0} Exception caught: {1}", m_curLoadScene,e.Message));
+                        bFailed = true;
+                        m_sceneEvent.Dequeue();
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        m_curSceneEvent = SceneEventType.SvrSceneUnload;
+                        m_curLoadScene = ssEvent.sceneName;
+                        AsyncOperation op = SceneManager.UnloadSceneAsync(ssEvent.sceneName, UnloadSceneOptions.None);
+                        op.completed += OnSvrSceneUnloadComplete;
+                        return;
+                    }
+                    catch (SystemException e)
+                    {
+                        Debug.Log(string.Format("UnloadScene {0} Exception caught: {1}", m_curLoadScene,e.Message));
+                        bFailed = true;
+                        m_sceneEvent.Dequeue();
+                    }
+                }
+            } while (bFailed&& m_sceneEvent.Count>0);
+
+           m_curSceneEvent = SceneEventType.Idle;
+           OnProcessServerSceneEventEnd();
+           return;
+        }
+
+        private void OnSvrSceneUnloadComplete(AsyncOperation op)
+        {
+            m_sceneEvent.Dequeue();
+
+            Debug.LogFormat("Unload scene {0} Completed", m_curUnloadScene);
+            m_curSceneEvent = SceneEventType.Idle;
+            ProcessServerSceneEvent();
         }
 
         private void OnSvrSceneLoadComplete(AsyncOperation op)
         {
+            m_sceneEvent.Dequeue();
+
             Debug.LogFormat("load scene {0} Completed", m_curLoadScene);
-            int c=SvrSpawnSceneObjects(m_curLoadScene);
-            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", m_curLoadScene,c);
-            if (m_scenesForLoad.Count == 0) return;
-            m_curLoadScene = m_scenesForLoad.Dequeue();
-            AsyncOperation op1 = SvrLoadScene(m_curLoadScene);
-            op1.completed += OnSvrSceneLoadComplete;
+            int c = SvrSpawnSceneObjects(m_curLoadScene);
+            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", m_curLoadScene, c);
+            m_curSceneEvent = SceneEventType.Idle;
+            ProcessServerSceneEvent();
         }
 
         private int SvrSpawnSceneObjects(string sceneName)
