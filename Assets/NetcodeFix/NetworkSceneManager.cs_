@@ -151,7 +151,7 @@ namespace Unity.Netcode
 
         private NetworkManager m_networkManager;
 
-        private SceneEventData m_SceneEventData;
+        private SceneEventData m_SceneEventData;//用于服务端向客户端发送场景同步指令
 
         internal SceneEventType m_curSceneEvent;//当前场景事件，如果为idle则合适处理一些事情(注意：服务端和客户端具备不同的事件)
 
@@ -165,8 +165,10 @@ namespace Unity.Netcode
             internal Queue<NetworkObject.SceneObject> leaveQue;
         }
         
-        internal Dictionary<int, SceneChangeItem> m_ObjectChangeScene = new Dictionary<int, SceneChangeItem>();//每个场景的
-        internal Dictionary<int, string> m_SceneHandleToName = new Dictionary<int, string>();//场景句柄到场景名称的映射
+        internal Dictionary<int, SceneChangeItem> m_ObjectChangeScene = new Dictionary<int, SceneChangeItem>();//服务端使用的变量，每个场景的进出网络对象
+        internal Dictionary<int, string> m_SceneHandleToName = new Dictionary<int, string>();//服务端使用的变量，场景句柄到场景名称的映射
+        internal Dictionary<string,int> m_SceneNameToHandle = new Dictionary<string,int>();//服务端使用的变量，场景名称到场景句柄的映射
+        SceneChangeItem m_SceneChangeItem;//客户端使用
         /// <summary>
         /// 缺省的场景
         /// </summary>
@@ -186,8 +188,11 @@ namespace Unity.Netcode
         {
             m_networkManager = networkManager;
             m_curSceneEvent = SceneEventType.Idle;
+            m_SceneChangeItem.enterQue = new Queue<NetworkObject.SceneObject>();
+            m_SceneChangeItem.leaveQue = new Queue<NetworkObject.SceneObject>();
             m_networkManager.OnClientDisconnectCallback += OnDisconnect;
             m_networkManager.OnClientConnectedCallback += OnConnect;
+            DontDestroyOnLoadScene = m_networkManager.gameObject.scene;
         }
 
         internal void OnDisconnect(ulong id)
@@ -207,6 +212,40 @@ namespace Unity.Netcode
         /// <param name="networkObject"></param>
         internal void NotifyNetworkObjectSceneChanged(NetworkObject networkObject)
         {
+            if (!m_networkManager.IsServer) return;
+            int scOldHandle = networkObject.SceneOriginHandle;
+            int scCurHandle = networkObject.NetworkSceneHandle;
+            NetworkObject.SceneObject scobj = networkObject.GetMessageSceneObject(0);
+
+            if (!m_ObjectChangeScene.ContainsKey(scOldHandle))
+            {
+                SceneChangeItem item = new SceneChangeItem();
+                item.sceneHandle = scOldHandle;
+                item.sceneName = m_SceneHandleToName[scOldHandle];
+                item.leaveQue = new Queue<NetworkObject.SceneObject>();
+                item.enterQue = new Queue<NetworkObject.SceneObject>();
+                item.leaveQue.Enqueue(scobj);
+                m_ObjectChangeScene.Add(scOldHandle, item);
+            }
+            else
+            {
+                m_ObjectChangeScene[scOldHandle].leaveQue.Enqueue(scobj);
+            }
+
+            if (!m_ObjectChangeScene.ContainsKey(scCurHandle))
+            {
+                SceneChangeItem item = new SceneChangeItem();
+                item.sceneHandle = scCurHandle;
+                item.sceneName = m_SceneHandleToName[scCurHandle];
+                item.leaveQue = new Queue<NetworkObject.SceneObject>();
+                item.enterQue = new Queue<NetworkObject.SceneObject>();
+                item.enterQue.Enqueue(scobj);
+                m_ObjectChangeScene.Add(scCurHandle, item);
+            }
+            else
+            {
+                m_ObjectChangeScene[scCurHandle].enterQue.Enqueue(scobj);
+            }
 
         }
 
@@ -218,13 +257,47 @@ namespace Unity.Netcode
             if (NetworkManager.Singleton.IsServer)
             {
                 //向客户端发送活动对象进出场景事件
-
+                foreach (var clientId in m_networkManager.ConnectedClientsIds)
+                {
+                    int scHandle=m_SceneNameToHandle[m_ClientScenes[clientId]];
+                    if (m_ObjectChangeScene.ContainsKey(scHandle))
+                    {
+                        if(m_ObjectChangeScene[scHandle].enterQue.Count>0|| m_ObjectChangeScene[scHandle].leaveQue.Count>0)
+                        {
+                            SceneEventData seData = new SceneEventData();
+                            seData.seType = SceneEventType.ObjectSceneChanged;
+                            seData.targetClientId = clientId;
+                            seData.sceneName = m_ClientScenes[clientId];
+                            seData.enterObjectCount = (ushort)m_ObjectChangeScene[scHandle].enterQue.Count;
+                            seData.leaveObjectCount = (ushort)m_ObjectChangeScene[scHandle].leaveQue.Count;
+                            seData.enterQue= m_ObjectChangeScene[scHandle].enterQue;
+                            seData.leaveQue= m_ObjectChangeScene[scHandle].leaveQue;
+                            var message = new SceneEventMessage
+                            {
+                                EventData = seData
+                            };
+                            m_networkManager.ConnectionManager.SendMessage(ref message, NetworkDelivery.ReliableFragmentedSequenced, clientId);
+                        }
+                    }
+                }
+                m_ObjectChangeScene.Clear();
             }
             else
             {
                 if (m_curSceneEvent != SceneEventType.Idle) return;//如果当前忙则不做处理
                 //处理接收到的活动对象进出场景事件
+                while(m_SceneChangeItem.enterQue.Count>0)
+                {
+                    NetworkObject.SceneObject scobj = m_SceneChangeItem.enterQue.Dequeue();
+                    //创建游戏对象并设置Spawn状态
+                    
+                }
+                while (m_SceneChangeItem.leaveQue.Count > 0)
+                {
+                    NetworkObject.SceneObject scobj = m_SceneChangeItem.leaveQue.Dequeue();
+                    //销毁游戏对象
 
+                }
             }
         }
 
@@ -237,6 +310,8 @@ namespace Unity.Netcode
         /// <returns></returns>
         internal NetworkObject GetSceneRelativeInSceneNetworkObject(uint globalObjectIdHash, int? networkSceneHandle)
         {
+            //因为只在客户端调用，客户端只存在一个场景，所以忽略networkSceneHandle参数
+            //这个地方可以进一步性能优化
             foreach (NetworkObject no in GameObject.FindObjectsOfType<NetworkObject>())
             {
                 if (no.GlobalObjectIdHash == globalObjectIdHash)
@@ -315,6 +390,20 @@ namespace Unity.Netcode
                     m_curLoadScene = seData.sceneName;
                     AsyncOperation op = SceneManager.LoadSceneAsync(m_curLoadScene, LoadSceneMode.Single);
                     op.completed += OnClientSceneLoadComplete;
+                }
+
+                if(seData.seType == SceneEventType.ObjectSceneChanged)
+                {
+                    if(seData.sceneName!=m_SceneChangeItem.sceneName)
+                    {
+                        m_SceneChangeItem.sceneName = seData.sceneName;
+                        m_SceneChangeItem.enterQue.Clear();
+                        m_SceneChangeItem.leaveQue.Clear();
+                    }
+                    foreach(var q in seData.enterQue)
+                        m_SceneChangeItem.enterQue.Enqueue(q);
+                    foreach(var q in seData.leaveQue)
+                        m_SceneChangeItem.leaveQue.Enqueue(q);
                 }
             }
         }
@@ -407,12 +496,17 @@ namespace Unity.Netcode
         
         private void OnProcessServerSceneEventEnd()
         {
+            m_SceneHandleToName.Clear();
+            m_SceneNameToHandle.Clear();
             //生成句柄和场景名称的映射字典
+            m_SceneHandleToName.Add(DontDestroyOnLoadScene.handle, DontDestroyOnLoadScene.name);
+            m_SceneNameToHandle.Add(DontDestroyOnLoadScene.name,DontDestroyOnLoadScene.handle);
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 Scene sc = SceneManager.GetSceneAt(i);
-                if (!m_SceneHandleToName.ContainsKey(sc.handle))
-                    m_SceneHandleToName.Add(sc.handle, sc.name);
+                m_SceneHandleToName.Add(sc.handle, sc.name);
+                m_SceneNameToHandle.Add(sc.name,sc.handle);
+                Debug.LogFormat("scname:{0} schandle:{1}", sc.name, sc.handle);
             }
         }
 
