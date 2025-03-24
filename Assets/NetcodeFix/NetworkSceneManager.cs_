@@ -408,7 +408,9 @@ namespace Unity.Netcode
                 foreach(var obj in m_NetworkObjectsClientSync)
                 {
                     //创建游戏对象并设置Spawn状态
-
+                    //var spawnedNetworkObject = NetworkObject.AddSceneObject(obj, InternalBuffer, m_networkManager);
+                    //这里需要创建一个InternalBuffer，用来传入AddSceneObject()方法。
+                    //并且发现，Despawn对象也是需要同步的。
                 }
                 m_NetworkObjectsClientSync.Clear();
 
