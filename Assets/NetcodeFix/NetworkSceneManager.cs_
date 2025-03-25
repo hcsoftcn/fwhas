@@ -566,9 +566,11 @@ namespace Unity.Netcode
 
         private void OnClientSceneLoadComplete(AsyncOperation op)
         {
-            for(int i = 0; i< m_SceneEventData.sceneObjectCount; i++)
+            //此处的代码存在bug，没有将NetworkBehaviour的数据考虑进去。应该使用NetworkObject.AddSceneObject来进行NetworkBehaviour的解包。
+            //此处还应该将despawn的insceneobject也包含进来。
+            for (int i = 0; i< m_SceneEventData.sceneObjectCount; i++)
             {
-                var networkObject = NetworkManager.Singleton.SpawnManager.CreateLocalNetworkObject(m_SceneEventData.sceneObjects[i]);
+                var networkObject = m_networkManager.SpawnManager.CreateLocalNetworkObject(m_SceneEventData.sceneObjects[i]);
                 if (networkObject != null)
                 {
                    m_networkManager.SpawnManager.SpawnNetworkObjectLocally(networkObject, m_SceneEventData.sceneObjects[i], true);
