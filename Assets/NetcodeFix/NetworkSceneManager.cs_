@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace Unity.Netcode
         internal Queue<NetworkObject.SceneObject> leaveQue;
         internal ushort networkObjectsCount;//需要同步的网络对象数目
         internal List<NetworkObject.SceneObject> networkObjectsSync;
+        internal FastBufferReader InternalBuffer;//内部缓冲区
 
         internal void Serialize(FastBufferWriter writer)
         {
@@ -142,14 +144,9 @@ namespace Unity.Netcode
 
         internal void DeserializeScenePlacedObjects(FastBufferReader reader)
         {
-            reader.ReadValueSafe(out sceneObjectCount);
-            sceneObjects = new List<NetworkObject.SceneObject>();
-
-            for (int i=0;i< sceneObjectCount;i++)
+            unsafe
             {
-                NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
-                obj.Deserialize(reader);
-                sceneObjects.Add(obj);               
+                InternalBuffer = new FastBufferReader(reader.GetUnsafePtrAtCurrentPosition(), Allocator.Persistent, reader.Length - reader.Position);
             }
         }
 
@@ -176,6 +173,8 @@ namespace Unity.Netcode
         private NetworkManager m_networkManager;
 
         private SceneEventData m_SceneEventData;//用于服务端向客户端发送场景同步指令
+
+        private SceneEventData m_SceneEventDataClientSceneLoad;//用于存放场景同步事件数据
 
         internal SceneEventType m_curSceneEvent;//当前场景事件，如果为idle则合适处理一些事情(注意：服务端和客户端具备不同的事件)
 
@@ -537,6 +536,7 @@ namespace Unity.Netcode
                     }
                     IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
                     m_SceneEventData = seData;
+                    m_SceneEventDataClientSceneLoad = seData;
                     m_curLoadScene = seData.sceneName;
                     AsyncOperation op = SceneManager.LoadSceneAsync(m_curLoadScene, LoadSceneMode.Single);
                     op.completed += OnClientSceneLoadComplete;
@@ -568,15 +568,23 @@ namespace Unity.Netcode
         {
             //此处的代码存在bug，没有将NetworkBehaviour的数据考虑进去。应该使用NetworkObject.AddSceneObject来进行NetworkBehaviour的解包。
             //此处还应该将despawn的insceneobject也包含进来。
-            for (int i = 0; i< m_SceneEventData.sceneObjectCount; i++)
+            ushort sceneObjectCount;
+            m_SceneEventDataClientSceneLoad.InternalBuffer.ReadValueSafe(out sceneObjectCount);
+            List<NetworkObject>  sceneObjects = new List<NetworkObject>();
+
+            for (int i = 0; i < sceneObjectCount; i++)
             {
-                var networkObject = m_networkManager.SpawnManager.CreateLocalNetworkObject(m_SceneEventData.sceneObjects[i]);
-                if (networkObject != null)
-                {
-                   m_networkManager.SpawnManager.SpawnNetworkObjectLocally(networkObject, m_SceneEventData.sceneObjects[i], true);
-                   networkObject.InternalInSceneNetworkObjectsSpawned();
-                }
+                NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
+                obj.Deserialize(m_SceneEventDataClientSceneLoad.InternalBuffer);
+                var networkObject = NetworkObject.AddSceneObject(obj, m_SceneEventDataClientSceneLoad.InternalBuffer, m_networkManager);
+                sceneObjects.Add(networkObject);
             }
+
+            foreach (var networkObject in sceneObjects)
+            {
+                networkObject.InternalInSceneNetworkObjectsSpawned();
+            }
+
             Scene sc = SceneManager.GetSceneByName(m_curLoadScene);
             MoveObjectsFromDontDestroyOnLoadToScene(sc);
             IsSpawnedObjectsPendingInDontDestroyOnLoad = false;
