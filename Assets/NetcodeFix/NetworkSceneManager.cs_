@@ -33,7 +33,11 @@ namespace Unity.Netcode
         internal ushort despawnedInSceneObjectsCount;
         internal List<uint> despawnedInSceneObjectsSync;
         internal FastBufferReader InternalBuffer;//内部缓冲区
-
+        internal bool hasBuffer;
+        internal SceneEventData()
+        {
+            hasBuffer = false;
+        }
         internal void Serialize(FastBufferWriter writer)
         {
             writer.WriteValueSafe(seType);
@@ -107,6 +111,7 @@ namespace Unity.Netcode
 
                     // We use Allocator.Persistent since scene synchronization will most likely take longer than 4 frames
                     InternalBuffer = new FastBufferReader(reader.GetUnsafePtrAtCurrentPosition(), Allocator.Persistent, byteCopy);
+                    hasBuffer = true;
                 }
             }
         }
@@ -149,6 +154,7 @@ namespace Unity.Netcode
             unsafe
             {
                 InternalBuffer = new FastBufferReader(reader.GetUnsafePtrAtCurrentPosition(), Allocator.Persistent, reader.Length - reader.Position);
+                hasBuffer = true;
             }
         }
 
@@ -217,9 +223,11 @@ namespace Unity.Netcode
 
         private NetworkManager m_networkManager;
 
-        private SceneEventData m_SceneEventData;//用于服务端向客户端发送场景同步指令
+        //private SceneEventData m_SceneEventData;//用于服务端向客户端发送场景同步指令
 
-        private SceneEventData m_SceneEventDataClientSceneLoad;//用于存放场景同步事件数据
+        private SceneEventData m_SceneEventDataClientSceneLoad = new SceneEventData();//用于存放场景加载事件数据
+
+        private SceneEventData m_SceneEventDataSynchronize = new SceneEventData();//用于存放场景同步事件数据
 
         internal SceneEventType m_curSceneEvent;//当前场景事件，如果为idle则合适处理一些事情(注意：服务端和客户端具备不同的事件)
 
@@ -238,7 +246,7 @@ namespace Unity.Netcode
         internal Dictionary<string,int> m_SceneNameToHandle = new Dictionary<string,int>();//服务端使用的变量，场景名称到场景句柄的映射
         List<NetworkObject> m_NetworkObjectsSync = new List<NetworkObject>();//服务端需要同步的网络对象
         List<uint> m_DespawnedInSceneObjectsSync = new List<uint>();
-        List<NetworkObject.SceneObject> m_NetworkObjectsClientSync = new List<NetworkObject.SceneObject>();//客户端接受到的需要同步的网络对象
+        //List<NetworkObject.SceneObject> m_NetworkObjectsClientSync = new List<NetworkObject.SceneObject>();//客户端接受到的需要同步的网络对象
         SceneChangeItem m_SceneChangeItem;//客户端使用
         /// <summary>
         /// 缺省的场景
@@ -271,7 +279,7 @@ namespace Unity.Netcode
             m_NetworkObjectsSync.Clear();
             foreach (var sobj in m_networkManager.SpawnManager.SpawnedObjectsList)
             {
-                if (sobj.Observers.Contains(clientId))
+                if ((sobj.IsSceneObject != null && sobj.IsSceneObject == false)&&sobj.Observers.Contains(clientId))
                 {
                     m_NetworkObjectsSync.Add(sobj);
                 }
@@ -285,11 +293,13 @@ namespace Unity.Netcode
             SortParentedNetworkObjects();
         }
 
-        internal void AddDespawnedInSceneNetworkObjects()
+        internal void AddDespawnedInSceneNetworkObjects(ulong clientId)
         {
+            //这里缺少对场景句柄的处理，应该是处理某客户端所处场景里的网络对象
+            int localSceneHandle = m_SceneNameToHandle[m_ClientScenes[clientId]];
             m_DespawnedInSceneObjectsSync.Clear();
             // Find all active and non-active in-scene placed NetworkObjects
-            var inSceneNetworkObjects = UnityEngine.Object.FindObjectsOfType<NetworkObject>(includeInactive: true).Where((c) => c.NetworkManager == m_networkManager);
+            var inSceneNetworkObjects = UnityEngine.Object.FindObjectsOfType<NetworkObject>(includeInactive: true).Where((c) => c.NetworkManager == m_networkManager&& c.GetSceneOriginHandle() == localSceneHandle);
 
             foreach (var sobj in inSceneNetworkObjects)
             {
@@ -465,15 +475,46 @@ namespace Unity.Netcode
             else
             {
                 if (m_curSceneEvent != SceneEventType.Idle) return;//如果当前忙则不做处理
-                //处理接收到的同步网络对象
-                foreach(var obj in m_NetworkObjectsClientSync)
+                //处理接收到的同步网络对象。
+                if (m_SceneEventDataSynchronize.hasBuffer)
                 {
-                    //创建游戏对象并设置Spawn状态
-                    //var spawnedNetworkObject = NetworkObject.AddSceneObject(obj, InternalBuffer, m_networkManager);
-                    //这里需要创建一个InternalBuffer，用来传入AddSceneObject()方法。
-                    //并且发现，Despawn对象也是需要同步的。
+                    ushort sceneObjectCount;
+                    m_SceneEventDataSynchronize.InternalBuffer.ReadValueSafe(out sceneObjectCount);
+                    List<NetworkObject> sceneObjects = new List<NetworkObject>();
+
+                    for (int i = 0; i < sceneObjectCount; i++)
+                    {
+                        NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
+                        obj.Deserialize(m_SceneEventDataSynchronize.InternalBuffer);
+                        var networkObject = NetworkObject.AddSceneObject(obj, m_SceneEventDataSynchronize.InternalBuffer, m_networkManager);
+                        sceneObjects.Add(networkObject);
+                    }
+
+                    foreach (var networkObject in sceneObjects)
+                    {
+                        networkObject.InternalInSceneNetworkObjectsSpawned();
+                    }
+                    sceneObjects.Clear();
+
+                    ushort despawnedInSceneObjectsSyncCount;
+                    m_SceneEventDataSynchronize.InternalBuffer.ReadValueSafe(out despawnedInSceneObjectsSyncCount);
+
+                    for (var i = 0; i < despawnedInSceneObjectsSyncCount; ++i)
+                    {
+                        uint GlobalObjectIdHash;
+                        m_SceneEventDataSynchronize.InternalBuffer.ReadValueSafe(out GlobalObjectIdHash);
+                        //do something with GlobalObjectIdHash。
+                        var inSceneNetworkObjects = UnityEngine.Object.FindObjectsOfType<NetworkObject>(includeInactive: true).Where((c) =>
+                            (c.IsSceneObject != false)).ToList();
+                        foreach (var inSceneObject in inSceneNetworkObjects)
+                        {
+                            if (inSceneObject.GlobalObjectIdHash == GlobalObjectIdHash)
+                                inSceneObject.InvokeBehaviourNetworkDespawn();
+                        }
+                    }
+
+                    m_SceneEventDataSynchronize.hasBuffer = false;
                 }
-                m_NetworkObjectsClientSync.Clear();
 
                 //处理接收到的活动对象进出场景事件
                 while (m_SceneChangeItem.enterQue.Count>0)
@@ -553,7 +594,7 @@ namespace Unity.Netcode
             m_networkManager.SpawnManager.UpdateObservedNetworkObjects(clientId);
             //生成需要同步的网络对象列表
             AddSpawnedNetworkObjects(clientId);
-            AddDespawnedInSceneNetworkObjects();
+            AddDespawnedInSceneNetworkObjects(clientId);
             //发送消息同步网络对象
             SceneEventData seData1 = new SceneEventData();
             seData1.seType = SceneEventType.Synchronize;
@@ -601,7 +642,7 @@ namespace Unity.Netcode
                         m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(m_networkManager.LocalClientId);
                     }
                     IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
-                    m_SceneEventData = seData;
+                    //m_SceneEventData = seData;
                     m_SceneEventDataClientSceneLoad = seData;
                     m_curLoadScene = seData.sceneName;
                     AsyncOperation op = SceneManager.LoadSceneAsync(m_curLoadScene, LoadSceneMode.Single);
@@ -624,7 +665,7 @@ namespace Unity.Netcode
 
                 if(seData.seType == SceneEventType.Synchronize)
                 {
-                    //暂时不处理
+                    m_SceneEventDataSynchronize = seData;
                 }
             }
         }
