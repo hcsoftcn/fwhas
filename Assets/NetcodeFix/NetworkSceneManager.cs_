@@ -29,7 +29,9 @@ namespace Unity.Netcode
         internal Queue<NetworkObject.SceneObject> enterQue;
         internal Queue<NetworkObject.SceneObject> leaveQue;
         internal ushort networkObjectsCount;//需要同步的网络对象数目
-        internal List<NetworkObject.SceneObject> networkObjectsSync;
+        internal List<NetworkObject> networkObjectsSync;
+        internal ushort despawnedInSceneObjectsCount;
+        internal List<uint> despawnedInSceneObjectsSync;
         internal FastBufferReader InternalBuffer;//内部缓冲区
 
         internal void Serialize(FastBufferWriter writer)
@@ -56,11 +58,7 @@ namespace Unity.Netcode
             }
             if(seType == SceneEventType.Synchronize)
             {
-                writer.WriteValueSafe(networkObjectsCount);
-                foreach (var obj in networkObjectsSync)
-                {
-                    obj.Serialize(writer);
-                }
+                SerializeSynchronizationData(writer);
             }
         }
 
@@ -98,13 +96,17 @@ namespace Unity.Netcode
             }
             if (seType == SceneEventType.Synchronize)
             {
-                reader.ReadValueSafe(out networkObjectsCount);
-                networkObjectsSync = new List<NetworkObject.SceneObject>();
-                for (int i = 0; i < networkObjectsCount; i++)
+                int byteCopy;
+                reader.ReadValueSafe(out byteCopy);
+                unsafe
                 {
-                    NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
-                    obj.Deserialize(reader);
-                    networkObjectsSync.Add(obj);
+                    if (!reader.TryBeginRead(byteCopy))
+                    {
+                        throw new OverflowException("Not enough space in the buffer to read recorded synchronization data size.");
+                    }
+
+                    // We use Allocator.Persistent since scene synchronization will most likely take longer than 4 frames
+                    InternalBuffer = new FastBufferReader(reader.GetUnsafePtrAtCurrentPosition(), Allocator.Persistent, byteCopy);
                 }
             }
         }
@@ -150,6 +152,49 @@ namespace Unity.Netcode
             }
         }
 
+        internal void SerializeSynchronizationData(FastBufferWriter writer)
+        {
+            var positionStart = writer.Position;
+
+            // Size Place Holder -- Start
+            // !!NOTE!!: Since this is a placeholder to be set after we know how much we have written,
+            // for stream offset purposes this MUST not be a packed value!
+            writer.WriteValueSafe((int)0);
+            // uint totalBytes = 0;
+
+            // Write the number of NetworkObjects we are serializing
+            writer.WriteValueSafe((ushort)networkObjectsSync.Count);
+
+            // Serialize all NetworkObjects that are spawned
+            for (var i = 0; i < networkObjectsSync.Count; ++i)
+            {
+                var noStart = writer.Position;
+                var sceneObject = networkObjectsSync[i].GetMessageSceneObject(targetClientId);
+                sceneObject.Serialize(writer);
+                var noStop = writer.Position;
+                //totalBytes += noStop - noStart;
+            }
+
+            // Write the number of despawned in-scene placed NetworkObjects
+            writer.WriteValueSafe((ushort)despawnedInSceneObjectsSync.Count);
+            // Write the scene handle and GlobalObjectIdHash value
+            for (var i = 0; i < despawnedInSceneObjectsSync.Count; ++i)
+            {
+                //var noStart = writer.Position;
+                writer.WriteValueSafe(despawnedInSceneObjectsSync[i]);
+                //var noStop = writer.Position;
+                //totalBytes += noStop - noStart;
+            }
+
+            // Size Place Holder -- End
+            var positionEnd = writer.Position;
+            var bytesWritten = (uint)(positionEnd - (positionStart + sizeof(uint)));
+            writer.Seek(positionStart);
+            // Write the total size written to the stream by NetworkObjects being serialized
+            writer.WriteValueSafe((int)bytesWritten);
+            writer.Seek(positionEnd);
+        }
+
         public void Dispose()
         {
         }
@@ -192,6 +237,7 @@ namespace Unity.Netcode
         internal Dictionary<int, string> m_SceneHandleToName = new Dictionary<int, string>();//服务端使用的变量，场景句柄到场景名称的映射
         internal Dictionary<string,int> m_SceneNameToHandle = new Dictionary<string,int>();//服务端使用的变量，场景名称到场景句柄的映射
         List<NetworkObject> m_NetworkObjectsSync = new List<NetworkObject>();//服务端需要同步的网络对象
+        List<uint> m_DespawnedInSceneObjectsSync = new List<uint>();
         List<NetworkObject.SceneObject> m_NetworkObjectsClientSync = new List<NetworkObject.SceneObject>();//客户端接受到的需要同步的网络对象
         SceneChangeItem m_SceneChangeItem;//客户端使用
         /// <summary>
@@ -238,6 +284,22 @@ namespace Unity.Netcode
             // The last thing we sort is parents before children
             SortParentedNetworkObjects();
         }
+
+        internal void AddDespawnedInSceneNetworkObjects()
+        {
+            m_DespawnedInSceneObjectsSync.Clear();
+            // Find all active and non-active in-scene placed NetworkObjects
+            var inSceneNetworkObjects = UnityEngine.Object.FindObjectsOfType<NetworkObject>(includeInactive: true).Where((c) => c.NetworkManager == m_networkManager);
+
+            foreach (var sobj in inSceneNetworkObjects)
+            {
+                if (sobj.IsSceneObject.HasValue && sobj.IsSceneObject.Value && !sobj.IsSpawned)
+                {
+                    m_DespawnedInSceneObjectsSync.Add(sobj.GlobalObjectIdHash);
+                }
+            }
+        }
+
         //被AddSpawnedNetworkObjects调用
         private int SortNetworkObjects(NetworkObject first, NetworkObject second)
         {
@@ -491,14 +553,18 @@ namespace Unity.Netcode
             m_networkManager.SpawnManager.UpdateObservedNetworkObjects(clientId);
             //生成需要同步的网络对象列表
             AddSpawnedNetworkObjects(clientId);
+            AddDespawnedInSceneNetworkObjects();
             //发送消息同步网络对象
             SceneEventData seData1 = new SceneEventData();
             seData1.seType = SceneEventType.Synchronize;
             seData1.targetClientId = clientId;
             seData1.sceneName = m_ClientScenes[clientId];
-            seData1.networkObjectsSync = new List<NetworkObject.SceneObject>();
+            seData1.networkObjectsSync = new List<NetworkObject>();
             foreach (var obj in m_NetworkObjectsSync)
-                seData1.networkObjectsSync.Add(obj.GetMessageSceneObject(clientId));
+                seData1.networkObjectsSync.Add(obj);
+            seData1.despawnedInSceneObjectsSync = new List<uint>();
+            foreach (var obj in m_DespawnedInSceneObjectsSync)
+                seData1.despawnedInSceneObjectsSync.Add(obj);
             var message1 = new SceneEventMessage
             {
                 EventData = seData1
@@ -558,8 +624,7 @@ namespace Unity.Netcode
 
                 if(seData.seType == SceneEventType.Synchronize)
                 {
-                    foreach (var obj in seData.networkObjectsSync)
-                        m_NetworkObjectsClientSync.Add(obj);
+                    //暂时不处理
                 }
             }
         }
