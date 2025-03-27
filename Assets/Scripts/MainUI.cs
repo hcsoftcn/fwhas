@@ -42,6 +42,7 @@ public class MainUI : NetworkBehaviour
         //SceneManager.LoadScene("Reg");
         //Debug.Log("OnBtnReg");
         //Global.Singleton.SwitchScene("Reg");
+        NetworkManager.Singleton.SceneManager.ClientSwitchScene("Reg");
     }
 
     public void OnBtnLogin()
