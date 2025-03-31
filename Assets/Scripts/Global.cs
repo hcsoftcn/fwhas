@@ -8,7 +8,7 @@ using System.Collections.Generic;
 public class Global : MonoBehaviour
 {
     public Config config;
-    public string curScene="Main";
+    public NetworkManager net;
     private static Global instance;
     // Start is called before the first frame update
     void Start()
@@ -16,22 +16,23 @@ public class Global : MonoBehaviour
         //测试中文编码
         config.curLocale= PlayerPrefs.GetInt("curLocale");
         DontDestroyOnLoad(gameObject);
+        net = NetworkManager.Singleton;
         if (config.startType == Config.StartType.Client)
         {
             
-            if (!NetworkManager.Singleton.IsConnectedClient)
-            {              
-                NetworkManager.Singleton.StartClient();
-                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            if (!net.IsConnectedClient)
+            {
+                net.StartClient();
+                net.OnClientConnectedCallback += OnClientConnected;
             }
         }
         else
         {
-            NetworkManager.Singleton.StartServer();
-            NetworkManager.Singleton.SceneManager.SvrLoadScene("Main");
-            NetworkManager.Singleton.SceneManager.SvrLoadScene("Reg");
-            NetworkManager.Singleton.SceneManager.SvrLoadScene("PlayScene");
-            NetworkManager.Singleton.SceneManager.SetDefaultScene("Main");
+            net.StartServer();
+            net.SceneManager.SvrLoadScene("Main");
+            net.SceneManager.SvrLoadScene("Reg");
+            net.SceneManager.SvrLoadScene("PlayScene");
+            net.SceneManager.SetDefaultScene("Main");
         }
     }
 

@@ -34,7 +34,7 @@ public class MainUI : NetworkBehaviour
     }
     public override void OnNetworkSpawn()
     {
-        Debug.Log("Main UI Spawned");
+        //Debug.Log("Main UI Spawned");
     }
     public void OnBtnReg()
     {
@@ -42,7 +42,7 @@ public class MainUI : NetworkBehaviour
         //SceneManager.LoadScene("Reg");
         //Debug.Log("OnBtnReg");
         //Global.Singleton.SwitchScene("Reg");
-        NetworkManager.Singleton.SceneManager.ClientSwitchScene("Reg");
+        Global.Singleton.net.SceneManager.ClientSwitchScene("Reg");
     }
 
     public void OnBtnLogin()

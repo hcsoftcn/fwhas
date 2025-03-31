@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 67559254}
   - component: {fileID: 67559253}
   m_Layer: 5
-  m_Name: Text (Legacy)
+  m_Name: txtPass (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -589,7 +589,7 @@ GameObject:
   - component: {fileID: 742424004}
   - component: {fileID: 742424003}
   m_Layer: 5
-  m_Name: InputField (Legacy)
+  m_Name: inPass1 (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -804,7 +804,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 778092998}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1875123978}
+        m_TargetAssemblyTypeName: RegUI, Assembly-CSharp
+        m_MethodName: OnBtnSubmit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &778092998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1043,7 +1055,7 @@ GameObject:
   - component: {fileID: 943772023}
   - component: {fileID: 943772022}
   m_Layer: 5
-  m_Name: Text (Legacy)
+  m_Name: txtPass1 (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1322,7 +1334,7 @@ GameObject:
   - component: {fileID: 1163271685}
   - component: {fileID: 1163271684}
   m_Layer: 5
-  m_Name: Text (Legacy)
+  m_Name: txtUser (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1522,7 +1534,7 @@ GameObject:
   - component: {fileID: 1449438031}
   - component: {fileID: 1449438030}
   m_Layer: 5
-  m_Name: InputField (Legacy)
+  m_Name: inUser (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1959,7 +1971,7 @@ GameObject:
   - component: {fileID: 1784137983}
   - component: {fileID: 1784137982}
   m_Layer: 5
-  m_Name: InputField (Legacy)
+  m_Name: inPass (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2104,6 +2116,7 @@ GameObject:
   - component: {fileID: 1875123976}
   - component: {fileID: 1875123975}
   - component: {fileID: 1875123974}
+  - component: {fileID: 1875123979}
   - component: {fileID: 1875123978}
   m_Layer: 5
   m_Name: Canvas
@@ -2212,6 +2225,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efb07a2624dbaab41abdcef853835936, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  user: {fileID: 1449438030}
+  pass: {fileID: 1784137982}
+  pass1: {fileID: 742424003}
+--- !u!114 &1875123979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1875123973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3204070951
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &1998110140
 GameObject:
   m_ObjectHideFlags: 0
