@@ -2,7 +2,6 @@
 using GameDB;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
 
 public class RegUI : NetworkBehaviour
 {
@@ -13,7 +12,7 @@ public class RegUI : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/MsgBox.prefab");
+        GameObject prefab = Resources.Load<GameObject>("Prefabs/MsgBox");
         GameObject instance = Instantiate(prefab);
         instance.transform.position = new Vector3(0, 0, 0);
         instance.transform.rotation = Quaternion.identity;
@@ -54,32 +53,34 @@ public class RegUI : NetworkBehaviour
             msgbox.Show(true);
             return;
         }
-        RegUserServerRpc(user.text,pass.text);
+        RegUserServerRpc(Global.Singleton.net.LocalClientId,user.text,pass.text);
     }
 
     [ServerRpc(RequireOwnership=false)]
-    public void RegUserServerRpc(string user,string pass)
+    public void RegUserServerRpc(ulong id,string user,string pass)
     {
         SqliteDB db=new SqliteDB();
         db.OpenDB();
         if (db.IsUserExists(user))
         {
             //注册失败，用户名已经存在。
-            ResClientRpc(-1);
+            ResClientRpc(id,-1);
         }
         else
         {
             if (db.RegUser(user, pass))
-                ResClientRpc(0);//注册成功。
+                ResClientRpc(id,0);//注册成功。
             else
-                ResClientRpc(-2);//注册失败，系统故障。
+                ResClientRpc(id,-2);//注册失败，系统故障。
         }
         db.CloseDB();
     }
 
     [ClientRpc]
-    public void ResClientRpc(int status)
+    public void ResClientRpc(ulong id,int status)
     {
+        if (id != Global.Singleton.net.LocalClientId) return;
+
         if (status == 0)
         {
             //注册成功
