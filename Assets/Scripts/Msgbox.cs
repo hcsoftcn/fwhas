@@ -16,13 +16,10 @@ public class Msgbox : MonoBehaviour
         
     }
 
-    public void SetMsg(string msg)
+    public void Show(string msg)
     {
         m_Localize.SetEntry(msg);
-    }
-    public void Show(bool vis)
-    {
-        gameObject.SetActive(vis);
+        gameObject.SetActive(true);
     }
     public void OnBtnOK()
     {
