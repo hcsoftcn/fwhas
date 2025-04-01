@@ -1,40 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Unity.Netcode;
-
-public class Player : NetworkBehaviour
+﻿public class Player
 {
-    // Start is called before the first frame update
-    private static Player instance;
-    public static Player Singleton
-    {
-        get
+    public enum status
         {
-            if (instance == null)
-            {
-                instance = FindObjectOfType<Player>();
-            }
-            return instance;
+            Idle,//空闲
+            InRoom,//在房间里
+            Ready,//已经准备好
+            Play//正在游戏
         }
-    }
-
-    void Start()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void UpdateScenesServerRpc(ulong id)
-    {
-        //NetworkManager.Singleton.SceneManager.SynchronizeNetworkObjects(id);
-        Debug.Log("UpdateScenesServerRpc");
-    }
-
+    public string user;//用户名
+    public bool bLogin;//是否已经登陆
+    public status sta;//玩家状态
+    public ulong id;//网络id
 }

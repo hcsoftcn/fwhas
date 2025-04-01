@@ -1,19 +1,21 @@
 ﻿using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using System.Collections;
 using System.Collections.Generic;
+
 
 
 public class Global : MonoBehaviour
 {
     public Config config;
     public NetworkManager net;
+    public Dictionary<ulong,Player> players;//服务端玩家字典
     private static Global instance;
     // Start is called before the first frame update
     void Start()
     {
         //测试中文编码
+        players = new Dictionary<ulong, Player>();
+     
         config.curLocale= PlayerPrefs.GetInt("curLocale");
         DontDestroyOnLoad(gameObject);
         net = NetworkManager.Singleton;
@@ -33,6 +35,8 @@ public class Global : MonoBehaviour
             net.SceneManager.SvrLoadScene("Reg");
             net.SceneManager.SvrLoadScene("PlayScene");
             net.SceneManager.SetDefaultScene("Main");
+            net.OnClientConnectedCallback += OnServerConnected;
+            net.OnClientDisconnectCallback += OnServerDisonnected;
         }
     }
 
@@ -64,5 +68,24 @@ public class Global : MonoBehaviour
     {
         Debug.LogFormat("OnConnected {0}",id);
     }
+    public void OnServerConnected(ulong id)
+    {
+       
+    }
 
+    public void OnServerDisonnected(ulong id)
+    {
+        if (players.ContainsKey(id))
+        {
+            Debug.LogFormat("玩家:{0}断开连接", players[id].user);
+            players.Remove(id);
+        }
+    }
+
+    public bool UserHaveLogin(string user)
+    {
+        foreach (var player in players)
+            if (player.Value.user == user && player.Value.bLogin) return true;
+        return false;
+    }
 }

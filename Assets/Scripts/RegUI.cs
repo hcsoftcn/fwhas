@@ -10,6 +10,7 @@ public class RegUI : NetworkBehaviour
     public InputField pass;
     public InputField pass1;
     private Msgbox msgbox;
+    private ClientRpcParams clientRpcParams;
     // Start is called before the first frame update
     void Start()
     {
@@ -18,6 +19,9 @@ public class RegUI : NetworkBehaviour
         instance.transform.position = new Vector3(0, 0, 0);
         instance.transform.rotation = Quaternion.identity;
         msgbox = instance.GetComponent<Msgbox>();
+
+        clientRpcParams = new ClientRpcParams();
+        clientRpcParams.Send = new ClientRpcSendParams();
     }
 
     // Update is called once per frame
@@ -61,13 +65,7 @@ public class RegUI : NetworkBehaviour
 
         if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
 
-        ClientRpcParams clientRpcParams = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new ulong[] { id }
-            }
-        };
+        clientRpcParams.Send.TargetClientIds = new ulong[] { id };
 
         SqliteDB db=new SqliteDB();
         db.OpenDB();

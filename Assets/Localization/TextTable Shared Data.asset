@@ -87,6 +87,14 @@ MonoBehaviour:
     m_Key: reg.msg6
     m_Metadata:
       m_Items: []
+  - m_Id: 10974670437351424
+    m_Key: main.msg1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10984182871359488
+    m_Key: main.msg2
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

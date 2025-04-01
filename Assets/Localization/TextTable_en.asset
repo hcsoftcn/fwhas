@@ -90,6 +90,14 @@ MonoBehaviour:
     m_Localized: "Password must be greater than 6 digits\u3002"
     m_Metadata:
       m_Items: []
+  - m_Id: 10974670437351424
+    m_Localized: "Identity verification failed, login failed\u3002"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10984182871359488
+    m_Localized: "Repeated login, login failed\u3002"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
