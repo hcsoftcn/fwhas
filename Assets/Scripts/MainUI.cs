@@ -1,12 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Netcode;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using GameDB;
-
-
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -89,9 +84,9 @@ public class MainUI : NetworkBehaviour
                 Player player = new Player();
                 player.user = user;
                 player.id = id;
-                player.bLogin = true;
                 player.sta = Player.status.Idle;
                 Global.Singleton.players.Add(id, player);
+                Global.Singleton.lobby.m_Online.Value = (short)Global.Singleton.players.Count;
                 Debug.LogFormat("玩家:{0}登录成功", user);
                 ResClientRpc(0, clientRpcParams);
             }
@@ -105,7 +100,7 @@ public class MainUI : NetworkBehaviour
     public void ResClientRpc(int status, ClientRpcParams clientRpcParams = default)
     {
         if (status == 0)//登陆成功
-            Global.Singleton.net.SceneManager.ClientSwitchScene("PlayScene");
+            Global.Singleton.net.SceneManager.ClientSwitchScene("Lobby");
         else if (status == -1)//验证失败
             msgbox.Show("main.msg1");
         else//重复登陆

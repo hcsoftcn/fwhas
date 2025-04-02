@@ -258,6 +258,10 @@ namespace Unity.Netcode
         private string m_curLoadScene;
         private string m_curUnloadScene;
 
+        public delegate void OnServerSceneLoadCompleteHandler(string scname);
+
+        public event OnServerSceneLoadCompleteHandler OnServerSceneLoadComplete;
+
         internal NetworkSceneManager(NetworkManager networkManager)
         {
             m_networkManager = networkManager;
@@ -837,6 +841,17 @@ namespace Unity.Netcode
 
         }
 
+        public void ServerSwitchScene(ulong id, string curScene)
+        {
+            if (m_networkManager.IsClient) return;
+
+            if (m_ClientScenes.ContainsKey(id))
+            {
+                m_ClientScenes[id] = curScene;
+                SynchronizeNetworkObjects(id);
+            }
+        }
+
         public void ClientSwitchScene(string curScene)
         {
             if (m_networkManager.IsServer) return;
@@ -871,6 +886,7 @@ namespace Unity.Netcode
                 m_SceneNameToHandle.Add(sc.name,sc.handle);
                 Debug.LogFormat("scname:{0} schandle:{1}", sc.name, sc.handle);
             }
+            OnServerSceneLoadComplete?.Invoke(m_curLoadScene);
         }
 
         private void ProcessServerSceneEvent()

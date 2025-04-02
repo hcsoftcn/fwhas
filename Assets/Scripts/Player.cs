@@ -8,7 +8,6 @@
             Play//正在游戏
         }
     public string user;//用户名
-    public bool bLogin;//是否已经登陆
     public status sta;//玩家状态
     public ulong id;//网络id
 }

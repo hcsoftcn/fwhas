@@ -95,6 +95,30 @@ MonoBehaviour:
     m_Key: main.msg2
     m_Metadata:
       m_Items: []
+  - m_Id: 11252806928433152
+    m_Key: lobby.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11264278320513024
+    m_Key: lobby.list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11264970678468608
+    m_Key: lobby.btnCreate
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11265068921651200
+    m_Key: lobby.btnJoin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11265220147281920
+    m_Key: lobby.btnCancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11266706151440384
+    m_Key: lobby.Online
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

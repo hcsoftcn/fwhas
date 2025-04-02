@@ -10,6 +10,7 @@ public class Global : MonoBehaviour
     public NetworkManager net;
     public Dictionary<ulong,Player> players;//服务端玩家字典
     private static Global instance;
+    public LobbyUI lobby;
     // Start is called before the first frame update
     void Start()
     {
@@ -31,8 +32,10 @@ public class Global : MonoBehaviour
         else
         {
             net.StartServer();
+            net.SceneManager.OnServerSceneLoadComplete += OnServerSceneLoadComplete;
             net.SceneManager.SvrLoadScene("Main");
             net.SceneManager.SvrLoadScene("Reg");
+            net.SceneManager.SvrLoadScene("Lobby");
             net.SceneManager.SvrLoadScene("PlayScene");
             net.SceneManager.SetDefaultScene("Main");
             net.OnClientConnectedCallback += OnServerConnected;
@@ -40,6 +43,10 @@ public class Global : MonoBehaviour
         }
     }
 
+    public void OnServerSceneLoadComplete(string scname)
+    {
+        lobby = GameObject.Find("lobby").GetComponent<LobbyUI>();
+    }
     // Update is called once per frame
     void Update()
     {
@@ -85,7 +92,7 @@ public class Global : MonoBehaviour
     public bool UserHaveLogin(string user)
     {
         foreach (var player in players)
-            if (player.Value.user == user && player.Value.bLogin) return true;
+            if (player.Value.user == user) return true;
         return false;
     }
 }

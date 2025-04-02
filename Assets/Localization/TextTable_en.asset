@@ -16,7 +16,8 @@ MonoBehaviour:
     m_Code: en
   m_SharedData: {fileID: 11400000, guid: e0b3c67719825a94a874394817cdbb91, type: 2}
   m_Metadata:
-    m_Items: []
+    m_Items:
+    - rid: 7936840124515221511
   m_TableData:
   - m_Id: 21336723456
     m_Localized: Fantasy World Hide And Seek
@@ -98,6 +99,39 @@ MonoBehaviour:
     m_Localized: "Repeated login, login failed\u3002"
     m_Metadata:
       m_Items: []
+  - m_Id: 11252806928433152
+    m_Localized: Game Hall
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11264278320513024
+    m_Localized: Room List
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11264970678468608
+    m_Localized: New Room
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11265068921651200
+    m_Localized: Join Room
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11265220147281920
+    m_Localized: Exit Game
+    m_Metadata:
+      m_Items:
+      - rid: 7936840124515221511
+  - m_Id: 11266706151440384
+    m_Localized: "Online\uFF1A{0}"
+    m_Metadata:
+      m_Items:
+      - rid: 7936840124515221511
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 7936840124515221511
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 11265220147281920
+        - id: 11266706151440384

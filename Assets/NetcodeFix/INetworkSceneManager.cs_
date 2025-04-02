@@ -32,6 +32,11 @@ namespace Unity.Netcode
         /// <param name="curScene"></param>
         void ClientSwitchScene(string curScene);
         /// <summary>
+        /// 在服务端切换某个客户端的场景
+        /// </summary>
+        /// <param name="curScene"></param>
+        void ServerSwitchScene(ulong id,string curScene);
+        /// <summary>
         /// 设置缺省场景
         /// </summary>
         /// <param name="defaultScene"></param>
