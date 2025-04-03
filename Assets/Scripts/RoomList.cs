@@ -32,10 +32,27 @@ public class RoomList : MonoBehaviour
             obj.transform.localScale = new Vector3(1, 1, 1);
             Text t = obj.GetComponent<Text>();
             t.text = v;
+            Button btn = obj.GetComponent<Button>();
+            int index = i;
+            btn.onClick.AddListener(() => OnListItemClicked(index));
             i++;
         }
-        selectbar.GetComponent<RectTransform>().localPosition =new Vector3(0,(selectIndex+1) * -32-8,0);
-        oldindex = selectIndex;
+        UpdateSelectBar();
+    }
+
+    void UpdateSelectBar()
+    {
+        if (oldindex != selectIndex)
+        {
+            selectbar.GetComponent<RectTransform>().localPosition = new Vector3(0, (selectIndex + 1) * -32 - 8, 0);
+            oldindex = selectIndex;
+        }
+    }
+    public void OnListItemClicked(int index)
+    {
+        Debug.LogFormat("OnListItemClicked:{0}", index);
+        selectIndex = index;
+        UpdateSelectBar();
     }
 
     // Update is called once per frame
@@ -46,10 +63,6 @@ public class RoomList : MonoBehaviour
         if (selectIndex < 0) selectIndex = 0;
         if (selectIndex > list.Count - 1) selectIndex = list.Count - 1;
 
-        if (oldindex!= selectIndex)
-        {
-            selectbar.GetComponent<RectTransform>().localPosition = new Vector3(0, (selectIndex + 1) * -32-8, 0);
-            oldindex = selectIndex;
-        }
+        UpdateSelectBar();
     }
 }
