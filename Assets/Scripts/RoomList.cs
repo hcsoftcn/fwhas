@@ -29,8 +29,10 @@ public class RoomList : MonoBehaviour
             GameObject obj = GameObject.Instantiate(prefab);
             obj.name = i.ToString();
             obj.transform.SetParent(parent);
+            obj.transform.localScale = new Vector3(1, 1, 1);
             Text t = obj.GetComponent<Text>();
             t.text = v;
+            i++;
         }
         selectbar.GetComponent<RectTransform>().localPosition =new Vector3(0,(selectIndex+1) * -30,0);
         oldindex = selectIndex;
