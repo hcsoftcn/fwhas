@@ -34,7 +34,7 @@ public class RoomList : MonoBehaviour
             t.text = v;
             i++;
         }
-        selectbar.GetComponent<RectTransform>().localPosition =new Vector3(0,(selectIndex+1) * -30,0);
+        selectbar.GetComponent<RectTransform>().localPosition =new Vector3(0,(selectIndex+1) * -32-8,0);
         oldindex = selectIndex;
     }
 
@@ -48,7 +48,7 @@ public class RoomList : MonoBehaviour
 
         if (oldindex!= selectIndex)
         {
-            selectbar.GetComponent<RectTransform>().localPosition = new Vector3(0, (selectIndex + 1) * -30, 0);
+            selectbar.GetComponent<RectTransform>().localPosition = new Vector3(0, (selectIndex + 1) * -32-8, 0);
             oldindex = selectIndex;
         }
     }
