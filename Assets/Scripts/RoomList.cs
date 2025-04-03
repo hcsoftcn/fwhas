@@ -1,0 +1,53 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class RoomList : MonoBehaviour
+{
+    public List<string> list=new List<string>();
+    public GameObject prefab;
+    public Transform parent;
+    public Transform selectbar;
+    public int selectIndex;
+    private int oldindex;
+    // Start is called before the first frame update
+    void Start()
+    {
+        selectIndex = 0;
+        list.Add("Wyy的房间(1/2)");
+        list.Add("Hcsoft的房间(1/2)");
+        list.Add("Game的房间(1/2)");
+        UpdateView();
+    }
+
+    void UpdateView()
+    {
+        int i = 0;
+        foreach (string v in list)
+        {
+            GameObject obj = GameObject.Instantiate(prefab);
+            obj.name = i.ToString();
+            obj.transform.SetParent(parent);
+            Text t = obj.GetComponent<Text>();
+            t.text = v;
+        }
+        selectbar.GetComponent<RectTransform>().localPosition =new Vector3(0,(selectIndex+1) * -30,0);
+        oldindex = selectIndex;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.W))   selectIndex--;
+        if (Input.GetKeyDown(KeyCode.S))   selectIndex++;
+        if (selectIndex < 0) selectIndex = 0;
+        if (selectIndex > list.Count - 1) selectIndex = list.Count - 1;
+
+        if (oldindex!= selectIndex)
+        {
+            selectbar.GetComponent<RectTransform>().localPosition = new Vector3(0, (selectIndex + 1) * -30, 0);
+            oldindex = selectIndex;
+        }
+    }
+}

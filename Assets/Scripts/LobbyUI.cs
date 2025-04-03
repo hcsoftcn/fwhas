@@ -8,28 +8,25 @@ public class LobbyUI : NetworkBehaviour
 {
     public NetworkVariable<short> m_Online = new NetworkVariable<short>();
     public LocalizeStringEvent m_Localize;
-    private ClientRpcParams clientRpcParams;
+
     // Start is called before the first frame update
     void Start()
     {
         if (Global.Singleton.net.IsClient)
         {
             VerifyServerRpc();
-
-            m_Localize.StringReference.Arguments = new object[] { m_Online.Value };
-            m_Localize.StringReference.StringChanged += OnStringChanged;
-            m_Localize.RefreshString();
-
-            clientRpcParams = new ClientRpcParams();
-            clientRpcParams.Send = new ClientRpcSendParams();
         }
-
-        //GetOnlineServerRpc();
     }
     public override void OnNetworkSpawn()
     {
         if (Global.Singleton.net.IsClient)
+        {
+            if (m_Localize.StringReference.Arguments == null)
+                m_Localize.StringReference.Arguments = new object[] { m_Online.Value };
+            m_Localize.StringReference.StringChanged += OnStringChanged;
+            m_Localize.RefreshString();
             m_Online.OnValueChanged += OnOnlineChanged;
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -42,14 +39,14 @@ public class LobbyUI : NetworkBehaviour
     {
         if (Global.Singleton.net.IsClient)
         {
-            m_Localize.StringReference.Arguments = new object[] { current };
+            m_Localize.StringReference.Arguments[0] = current;
             m_Localize.RefreshString();
         }
     }
 
     void OnStringChanged(string updatedText)
     {
-        m_Localize.GetComponent<Text>().text = updatedText;// m_Localize.StringReference.GetLocalizedString();
+        m_Localize.GetComponent<Text>().text = updatedText;
     }
 
     // Update is called once per frame
@@ -67,14 +64,6 @@ public class LobbyUI : NetworkBehaviour
             Global.Singleton.net.SceneManager.ServerSwitchScene(id,"Main");
     }
 
-    //[ServerRpc(RequireOwnership = false)]
-    //public void GetOnlineServerRpc(ServerRpcParams serverRpcParams = default)
-    //{
-    //    ulong id = serverRpcParams.Receive.SenderClientId;
-    //    clientRpcParams.Send.TargetClientIds = new ulong[] { id };
-    //    ResClientRpc(Global.Singleton.players.Count, clientRpcParams);
-    //}
-
     [ServerRpc(RequireOwnership = false)]
     public void LogoutServerRpc(ServerRpcParams serverRpcParams = default)
     {
@@ -87,14 +76,6 @@ public class LobbyUI : NetworkBehaviour
             Global.Singleton.lobby.m_Online.Value = (short)Global.Singleton.players.Count;
         }
     }
-
-    //[ClientRpc]
-    //public void ResClientRpc(int online, ClientRpcParams clientRpcParams = default)
-    //{
-    //    Debug.LogFormat("online:{0}", online);
-    //    m_Localize.StringReference.Arguments[0] = online;
-    //    m_Localize.RefreshString();
-    //}
 
     public void OnBtnCancel()
     {
