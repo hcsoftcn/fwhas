@@ -3,12 +3,12 @@ using UnityEngine.UI;
 using Unity.Netcode;
 using UnityEngine.Localization.Components;
 
-
 public class LobbyUI : NetworkBehaviour
 {
     public NetworkVariable<short> m_Online = new NetworkVariable<short>();
     public LocalizeStringEvent m_Localize;
-
+    public NetworkVariable<RoomList> m_list = new NetworkVariable<RoomList>();
+    public RoomListUI ui;
     // Start is called before the first frame update
     void Start()
     {
@@ -26,15 +26,26 @@ public class LobbyUI : NetworkBehaviour
             m_Localize.StringReference.StringChanged += OnStringChanged;
             m_Localize.RefreshString();
             m_Online.OnValueChanged += OnOnlineChanged;
+            m_list.OnValueChanged += OnRoomListChanged;
         }
     }
 
     public override void OnNetworkDespawn()
     {
         if (Global.Singleton.net.IsClient)
+        { 
             m_Online.OnValueChanged -= OnOnlineChanged;
+            m_list.OnValueChanged -= OnRoomListChanged;
+        }
     }
 
+    public void OnRoomListChanged(RoomList previous, RoomList current)
+    {
+        if (Global.Singleton.net.IsClient)
+        {
+            ui.UpdateView(current);
+        }
+    }
     public void OnOnlineChanged(short previous, short current)
     {
         if (Global.Singleton.net.IsClient)

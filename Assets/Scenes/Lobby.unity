@@ -848,6 +848,7 @@ MonoBehaviour:
   m_Online:
     m_InternalValue: 0
   m_Localize: {fileID: 1142811531}
+  ui: {fileID: 1808015910}
 --- !u!1 &930541193
 GameObject:
   m_ObjectHideFlags: 0
@@ -2029,7 +2030,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14e81f4bd67cfdc4bb4db37556a5c746, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: []
   prefab: {fileID: 6357511369520084041, guid: e9f63dd3596c66641a9438f2a97b5a51, type: 3}
   parent: {fileID: 635910936}
   selectbar: {fileID: 1701365383}

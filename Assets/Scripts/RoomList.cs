@@ -1,68 +1,35 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using System.Collections.Generic;
+using Unity.Netcode;
 
-public class RoomList : MonoBehaviour
+public struct RoomList : INetworkSerializable
 {
-    public List<string> list=new List<string>();
-    public GameObject prefab;
-    public Transform parent;
-    public Transform selectbar;
-    public int selectIndex;
-    private int oldindex;
-    // Start is called before the first frame update
-    void Start()
+    public List<Room> list;
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        selectIndex = 0;
-        list.Add("Wyy的房间(1/2)");
-        list.Add("Hcsoft的房间(1/2)");
-        list.Add("Game的房间(1/2)");
-        UpdateView();
-    }
+        if (list == null)
+            list = new List<Room>();
 
-    void UpdateView()
-    {
-        int i = 0;
-        foreach (string v in list)
+        if (serializer.IsReader)
         {
-            GameObject obj = GameObject.Instantiate(prefab);
-            obj.name = i.ToString();
-            obj.transform.SetParent(parent);
-            obj.transform.localScale = new Vector3(1, 1, 1);
-            Text t = obj.GetComponent<Text>();
-            t.text = v;
-            Button btn = obj.GetComponent<Button>();
-            int index = i;
-            btn.onClick.AddListener(() => OnListItemClicked(index));
-            i++;
+            list.Clear();
+            int count = 0;
+            serializer.SerializeValue(ref count);
+            
+            for (int i = 0; i < count; i++)
+            {
+                Room room = new Room();
+                room.NetworkSerialize(serializer);
+                list.Add(room);
+            }
         }
-        UpdateSelectBar();
-    }
-
-    void UpdateSelectBar()
-    {
-        if (oldindex != selectIndex)
+        else
         {
-            selectbar.GetComponent<RectTransform>().localPosition = new Vector3(0, (selectIndex + 1) * -32 - 8, 0);
-            oldindex = selectIndex;
+            int count = list.Count;
+            serializer.SerializeValue(ref count);
+            for (int i = 0; i < count; i++)
+            {
+                list[i].NetworkSerialize(serializer);
+            }
         }
-    }
-    public void OnListItemClicked(int index)
-    {
-        Debug.LogFormat("OnListItemClicked:{0}", index);
-        selectIndex = index;
-        UpdateSelectBar();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.W))   selectIndex--;
-        if (Input.GetKeyDown(KeyCode.S))   selectIndex++;
-        if (selectIndex < 0) selectIndex = 0;
-        if (selectIndex > list.Count - 1) selectIndex = list.Count - 1;
-
-        UpdateSelectBar();
     }
 }
