@@ -125,6 +125,30 @@ MonoBehaviour:
     m_Metadata:
       m_Items:
       - rid: 7936840124515221511
+  - m_Id: 12441504924864512
+    m_Localized: XXX's Room
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12442829783863296
+    m_Localized: 'member:'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12443970777157632
+    m_Localized: not ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12444096740495360
+    m_Localized: ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12444917691617280
+    m_Localized: Start Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12444978962010112
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

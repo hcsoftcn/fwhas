@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using Unity.Netcode;
 using UnityEngine.Localization.Components;
+using Newtonsoft.Json.Bson;
 
 public class LobbyUI : NetworkBehaviour
 {
@@ -92,5 +93,10 @@ public class LobbyUI : NetworkBehaviour
     {
         LogoutServerRpc();
         Global.Singleton.net.SceneManager.ClientSwitchScene("Main");
+    }
+
+    public void OnBtnCreate()
+    {
+        Global.Singleton.net.SceneManager.ClientSwitchScene("Room");
     }
 }

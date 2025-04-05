@@ -119,6 +119,30 @@ MonoBehaviour:
     m_Key: lobby.Online
     m_Metadata:
       m_Items: []
+  - m_Id: 12441504924864512
+    m_Key: room.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12442829783863296
+    m_Key: room.join
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12443970777157632
+    m_Key: room.notready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12444096740495360
+    m_Key: room.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12444917691617280
+    m_Key: room.start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12444978962010112
+    m_Key: room.Cancel
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
