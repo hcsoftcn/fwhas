@@ -241,6 +241,7 @@ namespace Unity.Netcode
         internal Dictionary<string,int> m_SceneNameToHandle = new Dictionary<string,int>();//服务端使用的变量，场景名称到场景句柄的映射
         List<NetworkObject> m_NetworkObjectsSync = new List<NetworkObject>();//服务端需要同步的网络对象
         List<uint> m_DespawnedInSceneObjectsSync = new List<uint>();
+        
 
         SceneChangeItem m_SceneChangeItem;//客户端使用
         /// <summary>
@@ -250,11 +251,14 @@ namespace Unity.Netcode
 
         internal struct ServerSceneEvent
         {
+            internal Scene des;
             internal bool IsForLoad;
             internal string sceneName;
         }
 
         private Queue<ServerSceneEvent> m_sceneEvent=new Queue<ServerSceneEvent>();
+        private Queue<ServerSceneEvent> m_sceneForMergeEvent = new Queue<ServerSceneEvent>();
+        List<string> m_MergeScenes = new List<string>();
         private string m_curLoadScene;
         private string m_curUnloadScene;
 
@@ -276,6 +280,7 @@ namespace Unity.Netcode
         internal void AddSpawnedNetworkObjects(ulong clientId)
         {
             m_NetworkObjectsSync.Clear();
+            //这里需要修改为某一个场景内的SpawnedObjects
             foreach (var sobj in m_networkManager.SpawnManager.SpawnedObjectsList)
             {
                 if ((sobj.IsSceneObject != null && sobj.IsSceneObject == false)&&sobj.Observers.Contains(clientId))
@@ -664,17 +669,23 @@ namespace Unity.Netcode
                 m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(clientId);
             }
 
-            //同步场景和场景内的静态网络对象
-            SceneEventData seData = new SceneEventData();
-            seData.seType = SceneEventType.ClientSceneLoad;
-            seData.targetClientId = clientId;
-            seData.sceneName = m_ClientScenes[clientId];
-            var message = new SceneEventMessage
+            if (m_MergeScenes.Contains(m_ClientScenes[clientId]))
             {
-                EventData = seData
-            };
-            m_networkManager.ConnectionManager.SendMessage(ref message, NetworkDelivery.ReliableFragmentedSequenced, clientId);
-
+                //发送MergeScene消息
+            }
+            else
+            {   //同步场景和场景内的静态网络对象
+                SceneEventData seData = new SceneEventData();
+                seData.seType = SceneEventType.ClientSceneLoad;
+                seData.targetClientId = clientId;
+                seData.sceneName = m_ClientScenes[clientId];
+                var message = new SceneEventMessage
+                {
+                    EventData = seData
+                };
+                m_networkManager.ConnectionManager.SendMessage(ref message, NetworkDelivery.ReliableFragmentedSequenced, clientId);
+            }
+           
             //同步动态生成的网络对象
             //更新客户端可见性
             m_networkManager.SpawnManager.UpdateObservedNetworkObjects(clientId);
@@ -836,9 +847,30 @@ namespace Unity.Netcode
             ProcessServerSceneEvent();
         }
 
-        public void SvrCreateAndMerageScene(string desScene, string srcScene, Vector3 offset)
+        public void SvrCreateAndMergeScene(string desScene, string srcScene, Vector3 offset)
         {
+            Scene newScene = SceneManager.CreateScene(desScene);
 
+            ServerSceneEvent ssEvent = new ServerSceneEvent();
+            ssEvent.des = newScene;
+            ssEvent.IsForLoad = true;
+            ssEvent.sceneName = srcScene;
+            m_sceneForMergeEvent.Enqueue(ssEvent);
+            if (m_sceneForMergeEvent.Count > 1) return;
+            ProcessServerSceneForMergeEvent();
+        }
+
+        private void OnSvrSceneForMergeLoadComplete(AsyncOperation op)
+        {
+            ServerSceneEvent e =m_sceneForMergeEvent.Dequeue();
+            Scene src=SceneManager.GetSceneByName(e.sceneName);
+            SceneManager.MergeScenes(e.des,src);
+            m_MergeScenes.Add(e.des.name);
+            Debug.LogFormat("Merage scene {0},{1} Completed", e.des.name,e.sceneName);
+            int c = SvrSpawnSceneObjects(e.des.name);
+            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", e.des.name, c);
+            m_curSceneEvent = SceneEventType.Idle;
+            ProcessServerSceneForMergeEvent();
         }
 
         public void ServerSwitchScene(ulong id, string curScene)
@@ -887,6 +919,48 @@ namespace Unity.Netcode
                 Debug.LogFormat("scname:{0} schandle:{1}", sc.name, sc.handle);
             }
             OnServerSceneLoadComplete?.Invoke(m_curLoadScene);
+        }
+
+        private void ProcessServerSceneForMergeEvent()
+        {
+            if (m_sceneForMergeEvent.Count == 0)
+            {
+                m_curSceneEvent = SceneEventType.Idle;
+                OnProcessServerSceneEventEnd();
+                return;
+            }
+
+            if (m_curSceneEvent != SceneEventType.Idle)
+                return;
+
+
+            bool bFailed;
+            do
+            {
+                ServerSceneEvent ssEvent = m_sceneForMergeEvent.Peek();
+                bFailed = false;
+                if (ssEvent.IsForLoad)
+                {
+                    try
+                    {
+                        m_curSceneEvent = SceneEventType.SvrSceneLoad;
+                        m_curLoadScene = ssEvent.sceneName;
+                        AsyncOperation op = SceneManager.LoadSceneAsync(ssEvent.sceneName, LoadSceneMode.Additive);
+                        op.completed += OnSvrSceneForMergeLoadComplete;
+                        return;
+                    }
+                    catch (SystemException e)
+                    {
+                        Debug.Log(string.Format("LoadScene {0} Exception caught: {1}", m_curLoadScene, e.Message));
+                        bFailed = true;
+                        m_sceneEvent.Dequeue();
+                    }
+                }
+            } while (bFailed && m_sceneForMergeEvent.Count > 0);
+
+            m_curSceneEvent = SceneEventType.Idle;
+            OnProcessServerSceneEventEnd();
+            return;
         }
 
         private void ProcessServerSceneEvent()
@@ -950,8 +1024,8 @@ namespace Unity.Netcode
 
         private void OnSvrSceneUnloadComplete(AsyncOperation op)
         {
-            m_sceneEvent.Dequeue();
-
+            ServerSceneEvent ssEvent=m_sceneEvent.Dequeue();
+            if(m_MergeScenes.Contains(m_curUnloadScene)) m_MergeScenes.Remove(m_curUnloadScene);
             Debug.LogFormat("Unload scene {0} Completed", m_curUnloadScene);
             m_curSceneEvent = SceneEventType.Idle;
             ProcessServerSceneEvent();

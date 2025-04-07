@@ -25,7 +25,7 @@ namespace Unity.Netcode
         /// <param name="desScene"></param>
         /// <param name="srcScene"></param>
         /// <param name="origin"></param>
-        void SvrCreateAndMerageScene(string desScene,string srcScene,Vector3 offset);
+        void SvrCreateAndMergeScene(string desScene,string srcScene,Vector3 offset);
         /// <summary>
         /// 客户端切换当前场景
         /// </summary>
