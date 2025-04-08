@@ -13,6 +13,7 @@ namespace Unity.Netcode
         SvrSceneLoad,//服务端场景加载事件
         SvrSceneUnload,//服务端场景卸载事件
         ClientSceneLoad,//客户端场景加载事件
+        ClientSceneMerge,//客户端场景合并事件
         ObjectSceneChanged,//客户端有新的网络对象更改场景事件
         Synchronize,//客户端同步动态网络对象事件
         SwitchScene//切换场景事件，客户端发送到服务端
@@ -23,6 +24,7 @@ namespace Unity.Netcode
         internal SceneEventType seType;//事件类型
         internal ulong targetClientId;//目标客户端id
         internal string sceneName;//场景名称
+        internal string srcScene;//源场景
         internal ushort sceneObjectCount;//场景对象计数
         internal List<NetworkObject.SceneObject> sceneObjects;//场景对象列表
         internal ushort enterObjectCount;//进入场景的对象数
@@ -50,6 +52,12 @@ namespace Unity.Netcode
             if (seType == SceneEventType.ClientSceneLoad)
             {
                 writer.WriteValueSafe(sceneName);
+                SerializeScenePlacedObjects(writer);
+            }
+            if (seType == SceneEventType.ClientSceneMerge)
+            {
+                writer.WriteValueSafe(sceneName);
+                writer.WriteValueSafe(srcScene);
                 SerializeScenePlacedObjects(writer);
             }
             if (seType == SceneEventType.ObjectSceneChanged)
@@ -87,6 +95,15 @@ namespace Unity.Netcode
                 reader.ReadValueSafe(out sceneName);
                 DeserializeScenePlacedObjects(reader);
             }
+
+            if (seType == SceneEventType.ClientSceneMerge)
+            {
+                NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.ClientSceneMerge;
+                reader.ReadValueSafe(out sceneName);
+                reader.ReadValueSafe(out srcScene);
+                DeserializeScenePlacedObjects(reader);
+            }
+
             if (seType == SceneEventType.ObjectSceneChanged)
             {
                 //NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.ObjectSceneChanged;
@@ -251,16 +268,20 @@ namespace Unity.Netcode
 
         internal struct ServerSceneEvent
         {
+            internal ulong id;//客户端id
             internal Scene des;
+            internal string desScene;
             internal bool IsForLoad;
             internal string sceneName;
         }
 
         private Queue<ServerSceneEvent> m_sceneEvent=new Queue<ServerSceneEvent>();
         private Queue<ServerSceneEvent> m_sceneForMergeEvent = new Queue<ServerSceneEvent>();
-        List<string> m_MergeScenes = new List<string>();
+        private Dictionary<string,string> m_MergeScenes = new Dictionary<string,string>();
         private string m_curLoadScene;
         private string m_curUnloadScene;
+        private Scene m_DesScene;
+        private string m_oldLoadScene;
 
         public delegate void OnServerSceneLoadCompleteHandler(string scname);
 
@@ -669,9 +690,20 @@ namespace Unity.Netcode
                 m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(clientId);
             }
 
-            if (m_MergeScenes.Contains(m_ClientScenes[clientId]))
+            if (m_MergeScenes.ContainsKey(m_ClientScenes[clientId]))
             {
                 //发送MergeScene消息
+                Debug.Log("发送MergeScene消息");
+                SceneEventData seData = new SceneEventData();
+                seData.seType = SceneEventType.ClientSceneMerge;
+                seData.targetClientId = clientId;
+                seData.sceneName = m_ClientScenes[clientId];
+                seData.srcScene = m_MergeScenes[m_ClientScenes[clientId]];
+                var message = new SceneEventMessage
+                {
+                    EventData = seData
+                };
+                m_networkManager.ConnectionManager.SendMessage(ref message, NetworkDelivery.ReliableFragmentedSequenced, clientId);
             }
             else
             {   //同步场景和场景内的静态网络对象
@@ -754,7 +786,24 @@ namespace Unity.Netcode
                     op.completed += OnClientSceneLoadComplete;
                 }
 
-                if(seData.seType == SceneEventType.ObjectSceneChanged)
+                if (seData.seType == SceneEventType.ClientSceneMerge)
+                {
+                    if (!m_networkManager.IsConnectedClient)
+                    {
+                        m_networkManager.IsConnectedClient = true;
+                        m_networkManager.ConnectionManager.InvokeOnClientConnectedCallback(m_networkManager.LocalClientId);
+                    }
+                    IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
+                    m_SceneEventDataClientSceneLoad = seData;
+                    m_oldLoadScene = m_curLoadScene;
+                    m_curLoadScene = seData.srcScene;
+                    m_DesScene= SceneManager.CreateScene(seData.sceneName);
+                    Debug.LogFormat("ClientSceneMerge:{0},{1}", seData.sceneName,m_curLoadScene);
+                    AsyncOperation op = SceneManager.LoadSceneAsync(m_curLoadScene, LoadSceneMode.Additive);
+                    op.completed += OnClientSceneMergeComplete;
+                }
+
+                if (seData.seType == SceneEventType.ObjectSceneChanged)
                 {
                     m_SceneEventDataObjectSceneChanged = seData;
                 }
@@ -764,6 +813,38 @@ namespace Unity.Netcode
                     m_SceneEventDataSynchronize = seData;
                 }
             }
+        }
+
+        private void OnClientSceneMergeComplete(AsyncOperation op)
+        {
+            Scene sc = SceneManager.GetSceneByName(m_curLoadScene);
+            SceneManager.MergeScenes(sc,m_DesScene);
+            SceneManager.UnloadScene(m_oldLoadScene);
+
+            ushort sceneObjectCount;
+            m_SceneEventDataClientSceneLoad.InternalBuffer.ReadValueSafe(out sceneObjectCount);
+            List<NetworkObject> sceneObjects = new List<NetworkObject>();
+
+            for (int i = 0; i < sceneObjectCount; i++)
+            {
+                NetworkObject.SceneObject obj = new NetworkObject.SceneObject();
+                obj.Deserialize(m_SceneEventDataClientSceneLoad.InternalBuffer);
+                var networkObject = NetworkObject.AddSceneObject(obj, m_SceneEventDataClientSceneLoad.InternalBuffer, m_networkManager);
+                sceneObjects.Add(networkObject);
+            }
+
+            foreach (var networkObject in sceneObjects)
+            {
+                networkObject.InternalInSceneNetworkObjectsSpawned();
+            }
+
+            MoveObjectsFromDontDestroyOnLoadToScene(m_DesScene);
+            IsSpawnedObjectsPendingInDontDestroyOnLoad = false;
+
+            ProcessDeferredCreateObjectMessages();
+
+            if (m_curSceneEvent == SceneEventType.ClientSceneMerge)
+                m_curSceneEvent = SceneEventType.Idle;
         }
 
         private void OnClientSceneLoadComplete(AsyncOperation op)
@@ -847,14 +928,16 @@ namespace Unity.Netcode
             ProcessServerSceneEvent();
         }
 
-        public void SvrCreateAndMergeScene(string desScene, string srcScene, Vector3 offset)
+        public void SvrCreateAndMergeScene(ulong id,string desScene, string srcScene, Vector3 offset)
         {
             Scene newScene = SceneManager.CreateScene(desScene);
 
             ServerSceneEvent ssEvent = new ServerSceneEvent();
+            ssEvent.id = id;
             ssEvent.des = newScene;
             ssEvent.IsForLoad = true;
             ssEvent.sceneName = srcScene;
+            ssEvent.desScene = desScene;
             m_sceneForMergeEvent.Enqueue(ssEvent);
             if (m_sceneForMergeEvent.Count > 1) return;
             ProcessServerSceneForMergeEvent();
@@ -864,11 +947,15 @@ namespace Unity.Netcode
         {
             ServerSceneEvent e =m_sceneForMergeEvent.Dequeue();
             Scene src=SceneManager.GetSceneByName(e.sceneName);
-            SceneManager.MergeScenes(e.des,src);
-            m_MergeScenes.Add(e.des.name);
-            Debug.LogFormat("Merage scene {0},{1} Completed", e.des.name,e.sceneName);
-            int c = SvrSpawnSceneObjects(e.des.name);
-            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", e.des.name, c);
+            SceneManager.MergeScenes(src,e.des);
+            Debug.LogFormat("srcScene:{0},desScene:{1}", e.sceneName, e.desScene);
+            m_MergeScenes.Add(e.desScene, e.sceneName);
+            Debug.LogFormat("Merage scene {0},{1} Completed", e.desScene, e.sceneName);
+            int c = SvrSpawnSceneObjects(e.desScene);
+            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", e.desScene, c);
+
+            ServerSwitchScene(e.id, e.desScene);
+
             m_curSceneEvent = SceneEventType.Idle;
             ProcessServerSceneForMergeEvent();
         }
@@ -914,9 +1001,9 @@ namespace Unity.Netcode
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 Scene sc = SceneManager.GetSceneAt(i);
+                Debug.LogFormat("scname:{0} schandle:{1}", sc.name, sc.handle);
                 m_SceneHandleToName.Add(sc.handle, sc.name);
                 m_SceneNameToHandle.Add(sc.name,sc.handle);
-                Debug.LogFormat("scname:{0} schandle:{1}", sc.name, sc.handle);
             }
             OnServerSceneLoadComplete?.Invoke(m_curLoadScene);
         }
@@ -1025,7 +1112,7 @@ namespace Unity.Netcode
         private void OnSvrSceneUnloadComplete(AsyncOperation op)
         {
             ServerSceneEvent ssEvent=m_sceneEvent.Dequeue();
-            if(m_MergeScenes.Contains(m_curUnloadScene)) m_MergeScenes.Remove(m_curUnloadScene);
+            if(m_MergeScenes.ContainsKey(m_curUnloadScene)) m_MergeScenes.Remove(m_curUnloadScene);
             Debug.LogFormat("Unload scene {0} Completed", m_curUnloadScene);
             m_curSceneEvent = SceneEventType.Idle;
             ProcessServerSceneEvent();

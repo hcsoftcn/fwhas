@@ -89,6 +89,14 @@ public class LobbyUI : NetworkBehaviour
         }
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void CreateRoomServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        ulong id = serverRpcParams.Receive.SenderClientId;
+        if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
+        Global.Singleton.net.SceneManager.SvrCreateAndMergeScene(id, "Room_"+ Global.Singleton.players[id].user,"Room",new Vector3(0,0,0));
+    }
+
     public void OnBtnCancel()
     {
         LogoutServerRpc();
@@ -97,6 +105,6 @@ public class LobbyUI : NetworkBehaviour
 
     public void OnBtnCreate()
     {
-        Global.Singleton.net.SceneManager.ClientSwitchScene("Room");
+        CreateRoomServerRpc();
     }
 }
