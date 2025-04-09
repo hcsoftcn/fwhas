@@ -1090,7 +1090,7 @@ namespace Unity.Netcode
                     try
                     {
                         m_curSceneEvent = SceneEventType.SvrSceneUnload;
-                        m_curLoadScene = ssEvent.sceneName;
+                        m_curUnloadScene = ssEvent.sceneName;
                         AsyncOperation op = SceneManager.UnloadSceneAsync(ssEvent.sceneName, UnloadSceneOptions.None);
                         op.completed += OnSvrSceneUnloadComplete;
                         return;
@@ -1112,19 +1112,19 @@ namespace Unity.Netcode
         private void OnSvrSceneUnloadComplete(AsyncOperation op)
         {
             ServerSceneEvent ssEvent=m_sceneEvent.Dequeue();
-            if(m_MergeScenes.ContainsKey(m_curUnloadScene)) m_MergeScenes.Remove(m_curUnloadScene);
-            Debug.LogFormat("Unload scene {0} Completed", m_curUnloadScene);
+            if(m_MergeScenes.ContainsKey(ssEvent.sceneName)) m_MergeScenes.Remove(ssEvent.sceneName);
+            Debug.LogFormat("Unload scene {0} Completed", ssEvent.sceneName);
             m_curSceneEvent = SceneEventType.Idle;
             ProcessServerSceneEvent();
         }
 
         private void OnSvrSceneLoadComplete(AsyncOperation op)
         {
-            m_sceneEvent.Dequeue();
+            ServerSceneEvent ssEvent = m_sceneEvent.Dequeue();
 
-            Debug.LogFormat("load scene {0} Completed", m_curLoadScene);
-            int c = SvrSpawnSceneObjects(m_curLoadScene);
-            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", m_curLoadScene, c);
+            Debug.LogFormat("load scene {0} Completed", ssEvent.sceneName);
+            int c = SvrSpawnSceneObjects(ssEvent.sceneName);
+            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", ssEvent.sceneName, c);
             m_curSceneEvent = SceneEventType.Idle;
             ProcessServerSceneEvent();
         }
@@ -1134,7 +1134,7 @@ namespace Unity.Netcode
             int count = 0;
             Scene sc = SceneManager.GetSceneByName(sceneName);
             if (sc == null || !sc.IsValid()) return count;
-            
+            Debug.LogFormat("SvrSpawnSceneObjects:{0}", sceneName);
             GameObject[] gameObjects = sc.GetRootGameObjects();
             foreach(var go in gameObjects)
             {

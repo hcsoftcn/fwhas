@@ -17,8 +17,17 @@ public class RoomUI : NetworkBehaviour
         
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void LeaveRoomServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        ulong id = serverRpcParams.Receive.SenderClientId;
+        if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
+        Global.Singleton.net.SceneManager.SvrUnloadScene("Room_" + Global.Singleton.players[id].user);
+    }
+
     public void OnBtnCancel()
     {
+        LeaveRoomServerRpc();
         Global.Singleton.net.SceneManager.ClientSwitchScene("Lobby");
     }
 }
