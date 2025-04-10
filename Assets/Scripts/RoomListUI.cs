@@ -20,9 +20,17 @@ public class RoomListUI : MonoBehaviour
 
     public void UpdateView(RoomList list)
     {
+        Debug.Log("UpdateView");
         if (list.list == null) return;
+        Debug.Log("UpdateView passed");
+        for (int j=0;j< parent.childCount;j++)
+        {
+            Destroy(parent.GetChild(j).gameObject);
+        }
+        
         int i = 0;
-        foreach(Room room in list.list)
+
+        foreach (Room room in list.list)
         {
             GameObject obj = GameObject.Instantiate(prefab);
             obj.name = i.ToString();
@@ -36,6 +44,7 @@ public class RoomListUI : MonoBehaviour
             i++;
         }
         maxcount = i;
+        if (selectIndex > maxcount - 1) selectIndex = maxcount - 1;
         UpdateSelectBar();
     }
 

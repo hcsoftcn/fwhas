@@ -9,7 +9,9 @@ public struct Room : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
+        
         serializer.SerializeValue(ref id);
+        if (username == null) username = "";
         serializer.SerializeValue(ref username);
         serializer.SerializeValue(ref maxcount);
         if (list == null)

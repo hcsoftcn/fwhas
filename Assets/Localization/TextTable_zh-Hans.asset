@@ -126,7 +126,7 @@ MonoBehaviour:
       m_Items:
       - rid: 7936840124515221510
   - m_Id: 12441504924864512
-    m_Localized: "XXX\u7684\u623F\u95F4"
+    m_Localized: "{0}\u7684\u623F\u95F4"
     m_Metadata:
       m_Items: []
   - m_Id: 12442829783863296

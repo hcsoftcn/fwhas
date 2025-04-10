@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using Unity.Netcode;
 using UnityEngine.Localization.Components;
-using Newtonsoft.Json.Bson;
+using System.Collections.Generic;
 
 public class LobbyUI : NetworkBehaviour
 {
@@ -94,6 +94,13 @@ public class LobbyUI : NetworkBehaviour
     {
         ulong id = serverRpcParams.Receive.SenderClientId;
         if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
+        Room r = new Room();
+        r.id = id;
+        r.username = Global.Singleton.players[id].user;
+        r.list = new List<ulong>();
+        r.list.Add(id);
+        m_list.Value.list.Add(r);
+        m_list.SetDirty(true);
         Global.Singleton.net.SceneManager.SvrCreateAndMergeScene(id, "Room_"+ Global.Singleton.players[id].user,"Room",new Vector3(0,0,0));
     }
 
