@@ -148,6 +148,11 @@ MonoBehaviour:
   - m_Id: 12444978962010112
     m_Localized: "\u9000\u51FA\u623F\u95F4"
     m_Metadata:
+      m_Items:
+      - rid: 7936840124515221510
+  - m_Id: 14230190841528320
+    m_Localized: "{0} \u7684\u623F\u95F4 ({1}/{2})"
+    m_Metadata:
       m_Items: []
   references:
     version: 2
@@ -159,3 +164,4 @@ MonoBehaviour:
         m_SharedEntries:
         - id: 11265220147281920
         - id: 11266706151440384
+        - id: 12444978962010112

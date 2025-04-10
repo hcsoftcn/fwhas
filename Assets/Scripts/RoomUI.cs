@@ -40,8 +40,6 @@ public class RoomUI : NetworkBehaviour
         {
             if (!IsRoomHaveOwner.Value)
                 SetRoomOwnerServerRpc();
-            else
-                JoinRoomServerRpc();
         }
 
         if (Global.Singleton.net.IsClient)
@@ -56,27 +54,6 @@ public class RoomUI : NetworkBehaviour
     public override void OnNetworkDespawn()
     { 
 
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void JoinRoomServerRpc(ServerRpcParams serverRpcParams = default)
-    {
-        ulong id = serverRpcParams.Receive.SenderClientId;
-        if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
-        if (!m_room.Value.list.Contains(id))
-        {
-            m_room.Value.list.Add(id);
-            //更新lobby房间列表数据
-            for(int i=0;i<Global.Singleton.lobby.m_list.Value.list.Count;i++)
-            {
-                if (Global.Singleton.lobby.m_list.Value.list[i].id == id)
-                {
-                    Global.Singleton.lobby.m_list.Value.list[i]=m_room.Value;
-                    Global.Singleton.lobby.m_list.SetDirty(true);
-                    break;
-                }
-            }
-        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -107,6 +84,20 @@ public class RoomUI : NetworkBehaviour
             Global.Singleton.lobby.m_list.Value.list.Remove(m_room.Value);
             Global.Singleton.lobby.m_list.SetDirty(true);
             Global.Singleton.net.SceneManager.SvrUnloadScene("Room_" + Global.Singleton.players[id].user);
+        }
+        else
+        {
+            m_room.Value.list.Remove(id);
+            m_room.SetDirty(true);
+            for (int i=0;i< Global.Singleton.lobby.m_list.Value.list.Count;i++)
+            {
+                if (Global.Singleton.lobby.m_list.Value.list[i].id == m_room.Value.id)
+                {
+                    Global.Singleton.lobby.m_list.Value.list[i] = m_room.Value;
+                    Global.Singleton.lobby.m_list.SetDirty(true);
+                    break;
+                }
+            }
         }
     }
 

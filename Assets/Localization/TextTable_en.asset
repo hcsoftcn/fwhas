@@ -149,6 +149,10 @@ MonoBehaviour:
     m_Localized: Cancel
     m_Metadata:
       m_Items: []
+  - m_Id: 14230190841528320
+    m_Localized: '{0}''s Room ({1}/{2})'
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

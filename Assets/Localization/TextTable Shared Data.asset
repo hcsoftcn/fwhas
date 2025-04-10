@@ -143,6 +143,10 @@ MonoBehaviour:
     m_Key: room.Cancel
     m_Metadata:
       m_Items: []
+  - m_Id: 14230190841528320
+    m_Key: lobby.item
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

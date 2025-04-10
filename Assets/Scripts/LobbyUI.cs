@@ -28,6 +28,7 @@ public class LobbyUI : NetworkBehaviour
             m_Localize.RefreshString();
             m_Online.OnValueChanged += OnOnlineChanged;
             m_list.OnValueChanged += OnRoomListChanged;
+            ui.UpdateView(m_list.Value);
         }
     }
 
@@ -97,6 +98,7 @@ public class LobbyUI : NetworkBehaviour
         Room r = new Room();
         r.id = id;
         r.username = Global.Singleton.players[id].user;
+        r.maxcount = 3;
         r.list = new List<ulong>();
         r.list.Add(id);
         m_list.Value.list.Add(r);
@@ -104,6 +106,18 @@ public class LobbyUI : NetworkBehaviour
         Global.Singleton.net.SceneManager.SvrCreateAndMergeScene(id, "Room_"+ Global.Singleton.players[id].user,"Room",new Vector3(0,0,0));
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void JoinRoomServerRpc(int index,ServerRpcParams serverRpcParams = default)
+    {
+        ulong id = serverRpcParams.Receive.SenderClientId;
+        if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
+        if (m_list.Value.list[index].list.Count < m_list.Value.list[index].maxcount)
+        {
+            m_list.Value.list[index].list.Add(id);
+            m_list.SetDirty(true);
+            Global.Singleton.net.SceneManager.ServerSwitchScene(id, "Room_" + m_list.Value.list[index].username);
+        }
+    }
     public void OnBtnCancel()
     {
         LogoutServerRpc();
@@ -114,4 +128,11 @@ public class LobbyUI : NetworkBehaviour
     {
         CreateRoomServerRpc();
     }
+
+    public void OnBtnJoin()
+    {
+        if(ui.selectIndex>=0&& ui.selectIndex<= m_list.Value.list.Count-1)
+            JoinRoomServerRpc(ui.selectIndex);
+    }
+
 }
