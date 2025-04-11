@@ -153,6 +153,10 @@ MonoBehaviour:
     m_Localized: '{0}''s Room ({1}/{2})'
     m_Metadata:
       m_Items: []
+  - m_Id: 14625858848423936
+    m_Localized: empty
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

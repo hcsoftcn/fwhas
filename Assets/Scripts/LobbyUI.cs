@@ -101,6 +101,8 @@ public class LobbyUI : NetworkBehaviour
         r.maxcount = 3;
         r.list = new List<ulong>();
         r.list.Add(id);
+        r.list1 = new List<string>();
+        r.list1.Add(Global.Singleton.players[id].user);
         m_list.Value.list.Add(r);
         m_list.SetDirty(true);
         Global.Singleton.net.SceneManager.SvrCreateAndMergeScene(id, "Room_"+ Global.Singleton.players[id].user,"Room",new Vector3(0,0,0));
@@ -114,6 +116,7 @@ public class LobbyUI : NetworkBehaviour
         if (m_list.Value.list[index].list.Count < m_list.Value.list[index].maxcount)
         {
             m_list.Value.list[index].list.Add(id);
+            m_list.Value.list[index].list1.Add(Global.Singleton.players[id].user);
             m_list.SetDirty(true);
             Global.Singleton.net.SceneManager.ServerSwitchScene(id, "Room_" + m_list.Value.list[index].username);
         }

@@ -1238,6 +1238,10 @@ MonoBehaviour:
   IsRoomHaveOwner:
     m_InternalValue: 0
   m_Localize: {fileID: 1515663110}
+  list:
+  - {fileID: 2063306501}
+  - {fileID: 1114872566}
+  - {fileID: 72539081}
 --- !u!1 &733429329
 GameObject:
   m_ObjectHideFlags: 0

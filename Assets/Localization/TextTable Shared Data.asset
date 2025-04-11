@@ -147,6 +147,10 @@ MonoBehaviour:
     m_Key: lobby.item
     m_Metadata:
       m_Items: []
+  - m_Id: 14625858848423936
+    m_Key: room.empty
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
