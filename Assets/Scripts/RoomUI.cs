@@ -67,11 +67,11 @@ public class RoomUI : NetworkBehaviour
             {
                 m_room.Value = r;
                 m_room.SetDirty(true);
+                IsRoomHaveOwner.Value = true;
                 break;
             }
         }
 
-        IsRoomHaveOwner.Value = true;
     }
 
     [ServerRpc(RequireOwnership = false)]

@@ -2,37 +2,47 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Localization.Components;
+using UnityEngine.Localization.SmartFormat.Core.Parsing;
 using UnityEngine.UI;
 
 public class RoomListUI : MonoBehaviour
 {
     public GameObject prefab;
     public Transform parent;
-    public Transform selectbar;
+    public GameObject selectbarprefab;
+    public RectTransform selectbar;
     public int selectIndex;
     private int maxcount;
     private Vector3 pos;
+    private Vector3 scale;
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        selectIndex = 0;
+        selectIndex = -1;
         maxcount = 0;
-        pos = new Vector3(0,0,0);
+        pos = new Vector3(-109,-17,0);
+        scale = new Vector3(1, 1, 1);
     }
 
     public void UpdateView(RoomList list)
     {
-        if (list.list == null)
-        {
-            UpdateSelectBar();
-            return;
-        }
-
-        for (int j=0;j< parent.childCount;j++)
+        for (int j = 0; j < parent.childCount; j++)
         {
             Destroy(parent.GetChild(j).gameObject);
         }
-        
+
+        if (list.list == null|| list.list.Count==0)
+        {
+            selectIndex = -1;
+            maxcount = 0;
+            
+            return;
+        }
+
+        maxcount = list.list.Count;
+        if (selectIndex > maxcount - 1) selectIndex = maxcount - 1;
+        if (selectIndex < 0) selectIndex = 0;
+
         int i = 0;
 
         foreach (Room room in list.list)
@@ -49,18 +59,26 @@ public class RoomListUI : MonoBehaviour
             Button btn = obj.GetComponent<Button>();
             int index = i;
             btn.onClick.AddListener(() => OnListItemClicked(index));
+
+            if(selectIndex==i)
+            {
+                selectbar = GameObject.Instantiate(selectbarprefab).GetComponent<RectTransform>();
+                selectbar.SetParent(obj.transform);
+                selectbar.localPosition = pos;
+                selectbar.localScale = scale;
+            }
             i++;
         }
-        maxcount = i;
-        if (selectIndex > maxcount - 1) selectIndex = maxcount - 1;
-        if (selectIndex < 0) selectIndex = 0;
-        UpdateSelectBar();
     }
 
     void UpdateSelectBar()
     {
-        pos.y = (selectIndex + 1) * -32.0f - 8.0f;
-        selectbar.GetComponent<RectTransform>().localPosition = pos;
+        if (parent.childCount == 0) return;
+        if (selectIndex > maxcount - 1) selectIndex = maxcount - 1;
+        if (selectIndex < 0) selectIndex = 0;
+        selectbar.SetParent(parent.GetChild(selectIndex));
+        selectbar.localPosition = pos;
+        selectbar.localScale = scale;
     }
     public void OnListItemClicked(int index)
     {
