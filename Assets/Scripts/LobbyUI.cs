@@ -38,6 +38,7 @@ public class LobbyUI : NetworkBehaviour
         { 
             m_Online.OnValueChanged -= OnOnlineChanged;
             m_list.OnValueChanged -= OnRoomListChanged;
+            m_Localize.StringReference.StringChanged -= OnStringChanged;
         }
     }
 
