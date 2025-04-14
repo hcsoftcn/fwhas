@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Localization.Components;
-using UnityEngine.Localization.SmartFormat.Core.Parsing;
 using UnityEngine.UI;
 
 public class RoomListUI : MonoBehaviour

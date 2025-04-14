@@ -32,4 +32,15 @@ public struct RoomList : INetworkSerializable
             }
         }
     }
+    public void UpdateRoom(Room r)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].id==r.id)
+            {
+                list[i] = r;
+                break;
+            }
+        }
+    }
 }

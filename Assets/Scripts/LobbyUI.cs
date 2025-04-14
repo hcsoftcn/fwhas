@@ -96,14 +96,16 @@ public class LobbyUI : NetworkBehaviour
     {
         ulong id = serverRpcParams.Receive.SenderClientId;
         if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
+        Player p = Global.Singleton.players[id];
+        p.SetStatus(Player.status.InRoom);
+        Global.Singleton.players[id] = p;
+
         Room r = new Room();
         r.id = id;
         r.username = Global.Singleton.players[id].user;
         r.maxcount = 3;
-        r.list = new List<ulong>();
-        r.list.Add(id);
-        r.list1 = new List<string>();
-        r.list1.Add(Global.Singleton.players[id].user);
+        r.list = new List<Player>();
+        r.list.Add(Global.Singleton.players[id]);
         m_list.Value.list.Add(r);
         m_list.SetDirty(true);
         Global.Singleton.net.SceneManager.SvrCreateAndMergeScene(id, "Room_"+ Global.Singleton.players[id].user,"Room",new Vector3(0,0,0));
@@ -116,8 +118,10 @@ public class LobbyUI : NetworkBehaviour
         if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
         if (m_list.Value.list[index].list.Count < m_list.Value.list[index].maxcount)
         {
-            m_list.Value.list[index].list.Add(id);
-            m_list.Value.list[index].list1.Add(Global.Singleton.players[id].user);
+            Player p = Global.Singleton.players[id];
+            p.SetStatus(Player.status.InRoom);
+            Global.Singleton.players[id] = p;
+            m_list.Value.list[index].list.Add(Global.Singleton.players[id]);
             m_list.SetDirty(true);
             Global.Singleton.net.SceneManager.ServerSwitchScene(id, "Room_" + m_list.Value.list[index].username);
         }

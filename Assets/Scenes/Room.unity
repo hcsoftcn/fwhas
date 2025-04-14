@@ -1242,6 +1242,11 @@ MonoBehaviour:
   - {fileID: 2063306501}
   - {fileID: 1114872566}
   - {fileID: 72539081}
+  list1:
+  - {fileID: 550770020}
+  - {fileID: 363461506}
+  - {fileID: 397940401}
+  ready: {fileID: 1380573353}
 --- !u!1 &733429329
 GameObject:
   m_ObjectHideFlags: 0
@@ -1842,7 +1847,19 @@ MonoBehaviour:
   m_Group: {fileID: 0}
   onValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 622443573}
+        m_TargetAssemblyTypeName: RoomUI, Assembly-CSharp
+        m_MethodName: OnStatusChanged
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_IsOn: 0
 --- !u!1 &1418264105
 GameObject:
