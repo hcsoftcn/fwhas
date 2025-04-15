@@ -781,6 +781,7 @@ namespace Unity.Netcode
                     }
                     IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
                     m_SceneEventDataClientSceneLoad = seData;
+                    m_oldLoadScene = m_curLoadScene;
                     m_curLoadScene = seData.sceneName;
                     AsyncOperation op = SceneManager.LoadSceneAsync(m_curLoadScene, LoadSceneMode.Single);
                     op.completed += OnClientSceneLoadComplete;
@@ -796,10 +797,10 @@ namespace Unity.Netcode
                     IsSpawnedObjectsPendingInDontDestroyOnLoad = true;
                     m_SceneEventDataClientSceneLoad = seData;
                     m_oldLoadScene = m_curLoadScene;
-                    m_curLoadScene = seData.srcScene;
+                    m_curLoadScene = seData.sceneName;
                     m_DesScene= SceneManager.CreateScene(seData.sceneName);
                     Debug.LogFormat("ClientSceneMerge:{0},{1}", seData.sceneName,m_curLoadScene);
-                    AsyncOperation op = SceneManager.LoadSceneAsync(m_curLoadScene, LoadSceneMode.Additive);
+                    AsyncOperation op = SceneManager.LoadSceneAsync(seData.srcScene, LoadSceneMode.Additive);
                     op.completed += OnClientSceneMergeComplete;
                 }
 
@@ -817,8 +818,9 @@ namespace Unity.Netcode
 
         private void OnClientSceneMergeComplete(AsyncOperation op)
         {
-            Scene sc = SceneManager.GetSceneByName(m_curLoadScene);
+            Scene sc = SceneManager.GetSceneByName(m_SceneEventDataClientSceneLoad.srcScene);
             SceneManager.MergeScenes(sc,m_DesScene);
+            Debug.Log("UnloadScene:"+ m_oldLoadScene);
             SceneManager.UnloadScene(m_oldLoadScene);
 
             ushort sceneObjectCount;

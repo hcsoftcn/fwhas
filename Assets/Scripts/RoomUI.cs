@@ -84,6 +84,7 @@ public class RoomUI : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         m_Localize.StringReference.StringChanged -= OnStringChanged;
+        m_room.OnValueChanged -= OnRoomValueChanged;
     }
 
     [ServerRpc(RequireOwnership = false)]
