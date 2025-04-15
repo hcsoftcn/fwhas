@@ -12,6 +12,7 @@ public class RoomListUI : MonoBehaviour
     private int maxcount;
     private Vector3 pos;
     private Vector3 scale;
+
     // Start is called before the first frame update
     void Awake()
     {

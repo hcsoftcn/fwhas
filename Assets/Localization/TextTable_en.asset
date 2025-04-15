@@ -157,6 +157,18 @@ MonoBehaviour:
     m_Localized: empty
     m_Metadata:
       m_Items: []
+  - m_Id: 15967081307701248
+    m_Localized: The room is full
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15968753207607296
+    m_Localized: Some players are not ready yet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15976074184884224
+    m_Localized: Exit Game
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

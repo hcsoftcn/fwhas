@@ -151,6 +151,18 @@ MonoBehaviour:
     m_Key: room.empty
     m_Metadata:
       m_Items: []
+  - m_Id: 15967081307701248
+    m_Key: lobby.roomfull
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15968753207607296
+    m_Key: room.notallready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15976074184884224
+    m_Key: game.exit
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

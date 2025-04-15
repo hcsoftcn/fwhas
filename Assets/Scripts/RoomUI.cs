@@ -14,10 +14,17 @@ public class RoomUI : NetworkBehaviour
     public List<Text> list=new List<Text>();
     public List<LocalizeStringEvent> list1 = new List<LocalizeStringEvent>();
     public Toggle ready;
+    public Button start;
+
+    private Msgbox msgbox;
     // Start is called before the first frame update
     void Start()
     {
-
+        GameObject prefab = Resources.Load<GameObject>("Prefabs/MsgBox");
+        GameObject instance = Instantiate(prefab);
+        instance.transform.position = new Vector3(0, 0, 0);
+        instance.transform.rotation = Quaternion.identity;
+        msgbox = instance.GetComponent<Msgbox>();
     }
 
     // Update is called once per frame
@@ -33,16 +40,17 @@ public class RoomUI : NetworkBehaviour
             list[i].text = "";
             list1[i].SetEntry("room.notready");
         }
-        Debug.LogFormat("UpdateRoom {0}", current.list[0].sta);
+ 
         for (int i = 0; i < current.list.Count; i++)
         {
             list[i].text = current.list[i].user;
             if (current.list[i].sta == Player.status.Ready)
             {
                 list1[i].SetEntry("room.ready");
-                Debug.Log("Set ready");
             }
         }
+        if (current.id == Global.Singleton.net.LocalClientId)
+            start.gameObject.SetActive(true);
     }
     void OnStringChanged(string updatedText)
     {
@@ -70,7 +78,7 @@ public class RoomUI : NetworkBehaviour
             if (!IsRoomHaveOwner.Value)
                  SetRoomOwnerServerRpc();
             else
-                 JoinRoomOwnerServerRpc();
+                 JoinRoomServerRpc();
         }
     }
     public override void OnNetworkDespawn()
@@ -97,7 +105,7 @@ public class RoomUI : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void JoinRoomOwnerServerRpc(ServerRpcParams serverRpcParams = default)
+    public void JoinRoomServerRpc(ServerRpcParams serverRpcParams = default)
     {
         ulong id = serverRpcParams.Receive.SenderClientId;
         if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
@@ -166,7 +174,6 @@ public class RoomUI : NetworkBehaviour
             Global.Singleton.players[id] = p;
             m_room.Value.SetStatus(id,Player.status.InRoom);
             Global.Singleton.lobby.m_list.Value.UpdateRoom(m_room.Value);
-            Debug.Log("not Ready");
         }
         else
         {
@@ -175,11 +182,18 @@ public class RoomUI : NetworkBehaviour
             Global.Singleton.players[id] = p;
             m_room.Value.SetStatus(id, Player.status.Ready);
             Global.Singleton.lobby.m_list.Value.UpdateRoom(m_room.Value);
-            Debug.Log("Ready");
         }
         
         m_room.SetDirty(true);
         Global.Singleton.lobby.m_list.SetDirty(true);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void StartGameServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        ulong id = serverRpcParams.Receive.SenderClientId;
+        if (!Global.Singleton.net.ConnectedClients.ContainsKey(id)) return;
+        Global.Singleton.net.SceneManager.SvrCreateAndMergeScene(id, "Game_" + Global.Singleton.players[id].user, "Game", new Vector3(0, 0, 0));
     }
     public void OnBtnCancel()
     {
@@ -189,5 +203,24 @@ public class RoomUI : NetworkBehaviour
     public void OnStatusChanged()
     {
         SetStatusServerRpc(ready.isOn);
+    }
+
+    public bool IsAllReady()
+    {
+        for (int i = 0; i < m_room.Value.list.Count; i++)
+        {
+            if (m_room.Value.list[i].sta != Player.status.Ready)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    public void OnBtnStart()
+    {
+        if (!IsAllReady())
+            msgbox.Show("room.notallready");
+        else
+            StartGameServerRpc();
     }
 }

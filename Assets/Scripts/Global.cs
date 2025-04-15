@@ -36,8 +36,6 @@ public class Global : MonoBehaviour
             net.SceneManager.SvrLoadScene("Main");
             net.SceneManager.SvrLoadScene("Reg");
             net.SceneManager.SvrLoadScene("Lobby");
-            //net.SceneManager.SvrLoadScene("Room");
-            net.SceneManager.SvrLoadScene("PlayScene");
             net.SceneManager.SetDefaultScene("Main");
             net.OnClientConnectedCallback += OnServerConnected;
             net.OnClientDisconnectCallback += OnServerDisonnected;
@@ -68,7 +66,6 @@ public class Global : MonoBehaviour
 
     public void OnDestroy()
     {
-        //Debug.Log("OnDestroy");
         PlayerPrefs.SetInt("curLocale", config.curLocale);
     }
 

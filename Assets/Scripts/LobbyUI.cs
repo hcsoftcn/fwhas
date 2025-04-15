@@ -10,9 +10,17 @@ public class LobbyUI : NetworkBehaviour
     public LocalizeStringEvent m_Localize;
     public NetworkVariable<RoomList> m_list = new NetworkVariable<RoomList>();
     public RoomListUI ui;
+
+    private Msgbox msgbox;
     // Start is called before the first frame update
     void Start()
     {
+        GameObject prefab = Resources.Load<GameObject>("Prefabs/MsgBox");
+        GameObject instance = Instantiate(prefab);
+        instance.transform.position = new Vector3(0, 0, 0);
+        instance.transform.rotation = Quaternion.identity;
+        msgbox = instance.GetComponent<Msgbox>();
+
         if (Global.Singleton.net.IsClient)
         {
             VerifyServerRpc();
@@ -139,8 +147,13 @@ public class LobbyUI : NetworkBehaviour
 
     public void OnBtnJoin()
     {
-        if(ui.selectIndex>=0&& ui.selectIndex<= m_list.Value.list.Count-1)
-            JoinRoomServerRpc(ui.selectIndex);
+        if (ui.selectIndex >= 0 && ui.selectIndex <= m_list.Value.list.Count - 1)
+        {
+            if (m_list.Value.list[ui.selectIndex].list.Count < m_list.Value.list[ui.selectIndex].maxcount)
+                JoinRoomServerRpc(ui.selectIndex);
+            else
+                msgbox.Show("lobby.roomfull");
+        }
     }
 
 }
