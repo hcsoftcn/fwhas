@@ -2,12 +2,15 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
+using UnityEngine.SceneManagement;
 
 
 public class GameUI : NetworkBehaviour
 {
     public NetworkVariable<Room> m_Game = new NetworkVariable<Room>();
     public List<Text> players = new List<Text>();
+    public GameObject prefab;
+    private NetworkObject obj;
     // Start is called before the first frame update
     void Start()
     {
@@ -47,6 +50,7 @@ public class GameUI : NetworkBehaviour
     }
     public override void OnNetworkSpawn()
     {
+
         if (Global.Singleton.net.IsClient)
         {
             Debug.Log("GameUI OnNetworkSpawn");
@@ -75,6 +79,13 @@ public class GameUI : NetworkBehaviour
                 Global.Singleton.players[id] = p;
 
                 m_Game.SetDirty(true);
+
+                GameObject ob = GameObject.Instantiate(prefab);//在Active场景创建
+                Debug.LogFormat("Instantiate obj:{0}", ob.scene.name);
+                SceneManager.MoveGameObjectToScene(ob, gameObject.scene);//迁移到当前场景
+                Debug.LogFormat("MoveGameObjectToScene :{0}", gameObject.scene.name);
+                obj = ob.GetComponent<NetworkObject>();
+                obj.Spawn();
                 return true;
             }
         }

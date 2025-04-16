@@ -1,6 +1,7 @@
 ﻿using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 
 
@@ -33,6 +34,7 @@ public class Global : MonoBehaviour
         {
             net.StartServer();
             net.SceneManager.OnServerSceneLoadComplete += OnServerSceneLoadComplete;
+            net.SceneManager.SvrLoadScene("Active");//活动场景，用于创建游戏对象
             net.SceneManager.SvrLoadScene("Main");
             net.SceneManager.SvrLoadScene("Reg");
             net.SceneManager.SvrLoadScene("Lobby");
@@ -44,6 +46,7 @@ public class Global : MonoBehaviour
 
     public void OnServerSceneLoadComplete(string scname)
     {
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName("Active"));
         lobby = GameObject.Find("lobby").GetComponent<LobbyUI>();
     }
     // Update is called once per frame

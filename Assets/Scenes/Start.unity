@@ -167,7 +167,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   config: {fileID: 11400000, guid: 25c2f7b0d63e9db4e9da33f23ab7924c, type: 2}
-  curScene: Main
+  net: {fileID: 0}
+  lobby: {fileID: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

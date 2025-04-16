@@ -304,13 +304,24 @@ namespace Unity.Netcode
 
         internal void AddSpawnedNetworkObjects(ulong clientId)
         {
+            //因为已经约定服务端始终在一个固定的Active场景spawn，所以spawn操作无需同步，只需同步跨场景转移操作就可以了。
+            //需要约定NetworkObject的设置Spawn with observers为false。
+            return;
+
             m_NetworkObjectsSync.Clear();
+            
             //这里需要修改为某一个场景内的SpawnedObjects
+            
             foreach (var sobj in m_networkManager.SpawnManager.SpawnedObjectsList)
             {
+                //Debug.LogFormat("AddSpawnedNetworkObjects {0}", sobj.gameObject.scene.name);
                 if ((sobj.IsSceneObject != null && sobj.IsSceneObject == false)&&sobj.Observers.Contains(clientId))
                 {
-                    m_NetworkObjectsSync.Add(sobj);
+                    if (sobj.gameObject.scene.name == m_ClientScenes[clientId])
+                    {
+                        Debug.LogFormat("AddSpawnedNetworkObjects {0} success", sobj.gameObject.scene.name);
+                        m_NetworkObjectsSync.Add(sobj);
+                    }
                 }
             }
 
@@ -824,6 +835,7 @@ namespace Unity.Netcode
         {
             Scene sc = SceneManager.GetSceneByName(m_SceneEventDataClientSceneLoad.srcScene);
             SceneManager.MergeScenes(sc,m_DesScene);
+            SceneManager.SetActiveScene(m_DesScene);
             Debug.Log("UnloadScene:"+ m_oldLoadScene);
             SceneManager.UnloadScene(m_oldLoadScene);
 

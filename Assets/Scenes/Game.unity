@@ -133,8 +133,8 @@ GameObject:
   - component: {fileID: 98810029}
   - component: {fileID: 98810028}
   - component: {fileID: 98810027}
+  - component: {fileID: 98810031}
   - component: {fileID: 98810026}
-  - component: {fileID: 98810030}
   m_Layer: 0
   m_Name: Square (1)
   m_TagString: Untagged
@@ -239,7 +239,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.9716981, g: 0.70127267, b: 0.70127267, a: 1}
   m_FlipX: 0
@@ -266,18 +266,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!210 &98810030
-SortingGroup:
+--- !u!114 &98810031
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 98810025}
   m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 1
-  m_SortAtRoot: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 4104732461
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &263595137
 GameObject:
   m_ObjectHideFlags: 0
@@ -741,12 +750,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2554860229596f48b5c56fcdb7b63e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsGameHaveOwner:
-    m_InternalValue: 0
   players:
   - {fileID: 1903782668}
   - {fileID: 627465877}
   - {fileID: 2135748107}
+  prefab: {fileID: 4224521248960449033, guid: ff8a35b4bb65ef34da3701d06c7bfe48, type: 3}
 --- !u!1 &1903782667
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,8 +1,9 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class Area : MonoBehaviour
+public class Area : NetworkBehaviour
 {
     // Start is called before the first frame update
     void Start()
