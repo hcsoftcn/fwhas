@@ -25,6 +25,7 @@ namespace Unity.Netcode
         internal ulong targetClientId;//目标客户端id
         internal string sceneName;//场景名称
         internal string srcScene;//源场景
+        internal Vector3 offset;//场景偏移量
         internal ushort sceneObjectCount;//场景对象计数
         internal List<NetworkObject.SceneObject> sceneObjects;//场景对象列表
         internal ushort enterObjectCount;//进入场景的对象数
@@ -58,6 +59,7 @@ namespace Unity.Netcode
             {
                 writer.WriteValueSafe(sceneName);
                 writer.WriteValueSafe(srcScene);
+                writer.WriteValueSafe(offset);
                 SerializeScenePlacedObjects(writer);
             }
             if (seType == SceneEventType.ObjectSceneChanged)
@@ -101,6 +103,7 @@ namespace Unity.Netcode
                 NetworkManager.Singleton.SceneManager.m_curSceneEvent = SceneEventType.ClientSceneMerge;
                 reader.ReadValueSafe(out sceneName);
                 reader.ReadValueSafe(out srcScene);
+                reader.ReadValueSafe(out offset);
                 DeserializeScenePlacedObjects(reader);
             }
 
@@ -273,6 +276,7 @@ namespace Unity.Netcode
             internal string desScene;
             internal bool IsForLoad;
             internal string sceneName;
+            internal Vector3 offset;
         }
 
         private Queue<ServerSceneEvent> m_sceneEvent=new Queue<ServerSceneEvent>();
@@ -823,6 +827,9 @@ namespace Unity.Netcode
             Debug.Log("UnloadScene:"+ m_oldLoadScene);
             SceneManager.UnloadScene(m_oldLoadScene);
 
+            OffsetScene(m_DesScene, m_SceneEventDataClientSceneLoad.offset);
+            Debug.LogFormat("OffsetScene {0} {1}", m_SceneEventDataClientSceneLoad.sceneName, m_SceneEventDataClientSceneLoad.offset);
+
             ushort sceneObjectCount;
             m_SceneEventDataClientSceneLoad.InternalBuffer.ReadValueSafe(out sceneObjectCount);
             List<NetworkObject> sceneObjects = new List<NetworkObject>();
@@ -940,9 +947,19 @@ namespace Unity.Netcode
             ssEvent.IsForLoad = true;
             ssEvent.sceneName = srcScene;
             ssEvent.desScene = desScene;
+            ssEvent.offset = offset;
             m_sceneForMergeEvent.Enqueue(ssEvent);
             if (m_sceneForMergeEvent.Count > 1) return;
             ProcessServerSceneForMergeEvent();
+        }
+
+        private void OffsetScene(Scene sc,Vector3 offset)
+        {
+            GameObject[] gameObjects = sc.GetRootGameObjects();
+            foreach (GameObject go in gameObjects)
+            {
+                go.transform.localPosition += offset;
+            }
         }
 
         private void OnSvrSceneForMergeLoadComplete(AsyncOperation op)
@@ -951,6 +968,10 @@ namespace Unity.Netcode
             Scene src=SceneManager.GetSceneByName(e.sceneName);
             SceneManager.MergeScenes(src,e.des);
             Debug.LogFormat("srcScene:{0},desScene:{1}", e.sceneName, e.desScene);
+            
+            OffsetScene(e.des,e.offset);
+            Debug.LogFormat("offset scene {0} {1}",e.desScene,e.offset);
+
             m_MergeScenes.Add(e.desScene, e.sceneName);
             Debug.LogFormat("Merage scene {0},{1} Completed", e.desScene, e.sceneName);
             int c = SvrSpawnSceneObjects(e.desScene);
