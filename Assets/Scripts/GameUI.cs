@@ -65,6 +65,12 @@ public class GameUI : NetworkBehaviour
         m_Game.OnValueChanged -= OnGameValueChanged;
     }
 
+    public void GameShow(NetworkObject no)
+    {
+        for (int i = 0; i < m_Game.Value.list.Count; i++)
+                no.NetworkShow(m_Game.Value.list[i].id);
+    }
+
     public bool IsGameOwner(ulong id)
     {
         foreach (Room r in Global.Singleton.lobby.m_list.Value.list)
@@ -86,7 +92,9 @@ public class GameUI : NetworkBehaviour
                 SceneManager.MoveGameObjectToScene(ob, gameObject.scene);//迁移到当前场景
                 Debug.LogFormat("MoveGameObjectToScene :{0}", gameObject.scene.name);
                 obj.Add(id,ob.GetComponent<NetworkObject>());
-                obj[id].Spawn();
+                
+                obj[id].SpawnAsPlayerObject(id,true);
+                GameShow(obj[id]);
                 return true;
             }
         }
@@ -124,7 +132,9 @@ public class GameUI : NetworkBehaviour
             SceneManager.MoveGameObjectToScene(ob, gameObject.scene);//迁移到当前场景
             Debug.LogFormat("MoveGameObjectToScene :{0}", gameObject.scene.name);
             obj.Add(id, ob.GetComponent<NetworkObject>());
-            obj[id].Spawn();
+            
+            obj[id].SpawnAsPlayerObject(id,true);
+            GameShow(obj[id]);
 
             m_Game.SetDirty(true);
         }
