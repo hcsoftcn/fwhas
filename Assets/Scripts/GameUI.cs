@@ -10,7 +10,7 @@ public class GameUI : NetworkBehaviour
     public NetworkVariable<Room> m_Game = new NetworkVariable<Room>();
     public List<Text> players = new List<Text>();
     public GameObject prefab;
-    private NetworkObject obj;
+    private Dictionary<ulong,NetworkObject> obj=new Dictionary<ulong, NetworkObject>();
     // Start is called before the first frame update
     void Start()
     {
@@ -81,11 +81,12 @@ public class GameUI : NetworkBehaviour
                 m_Game.SetDirty(true);
 
                 GameObject ob = GameObject.Instantiate(prefab);//在Active场景创建
+                ob.name = p.user;
                 Debug.LogFormat("Instantiate obj:{0}", ob.scene.name);
                 SceneManager.MoveGameObjectToScene(ob, gameObject.scene);//迁移到当前场景
                 Debug.LogFormat("MoveGameObjectToScene :{0}", gameObject.scene.name);
-                obj = ob.GetComponent<NetworkObject>();
-                obj.Spawn();
+                obj.Add(id,ob.GetComponent<NetworkObject>());
+                obj[id].Spawn();
                 return true;
             }
         }
@@ -116,6 +117,14 @@ public class GameUI : NetworkBehaviour
             Player p = Global.Singleton.players[id];
             p.SetStatus(Player.status.Play);
             Global.Singleton.players[id] = p;
+
+            GameObject ob = GameObject.Instantiate(prefab);//在Active场景创建
+            ob.name = p.user;
+            Debug.LogFormat("Instantiate obj:{0}", ob.scene.name);
+            SceneManager.MoveGameObjectToScene(ob, gameObject.scene);//迁移到当前场景
+            Debug.LogFormat("MoveGameObjectToScene :{0}", gameObject.scene.name);
+            obj.Add(id, ob.GetComponent<NetworkObject>());
+            obj[id].Spawn();
 
             m_Game.SetDirty(true);
         }

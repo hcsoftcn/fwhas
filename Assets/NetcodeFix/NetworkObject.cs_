@@ -1913,8 +1913,15 @@ namespace Unity.Netcode
         /// <returns>optional to use NetworkObject deserialized</returns>
         internal static NetworkObject AddSceneObject(in SceneObject sceneObject, FastBufferReader reader, NetworkManager networkManager)
         {
-            //Attempt to create a local NetworkObject
-            var networkObject = networkManager.SpawnManager.CreateLocalNetworkObject(sceneObject);
+            NetworkObject networkObject=null;
+            Debug.LogFormat("AddSceneObject {0}", sceneObject.NetworkObjectId);
+            if (networkManager.SpawnManager.SpawnedObjects.ContainsKey(sceneObject.NetworkObjectId))
+            {
+                Debug.LogWarning($"AddSceneObject Trying to spawn {nameof(sceneObject.NetworkObjectId)} {sceneObject.NetworkObjectId} that already exists!");
+            }
+            else
+                //Attempt to create a local NetworkObject
+                networkObject = networkManager.SpawnManager.CreateLocalNetworkObject(sceneObject);
             //Debug.LogFormat("NetworkObject->AddSceneObject Called,Hash{0}", sceneObject.Hash);
             if (networkObject == null)
             {
