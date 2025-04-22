@@ -80,7 +80,7 @@ public class RoomListUI : MonoBehaviour
     }
     public void OnListItemClicked(int index)
     {
-        Debug.LogFormat("OnListItemClicked:{0}", index);
+        //Debug.LogFormat("OnListItemClicked:{0}", index);
         selectIndex = index;
         UpdateSelectBar();
     }

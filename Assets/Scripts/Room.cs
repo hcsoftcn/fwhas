@@ -52,4 +52,16 @@ public struct Room : INetworkSerializable
             }
         }
     }
+
+    public int GetIndex(ulong id)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].id == id)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

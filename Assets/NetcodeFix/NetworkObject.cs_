@@ -1914,7 +1914,7 @@ namespace Unity.Netcode
         internal static NetworkObject AddSceneObject(in SceneObject sceneObject, FastBufferReader reader, NetworkManager networkManager)
         {
             NetworkObject networkObject=null;
-            Debug.LogFormat("AddSceneObject {0}", sceneObject.NetworkObjectId);
+            //Debug.LogFormat("AddSceneObject {0}", sceneObject.NetworkObjectId);
             if (networkManager.SpawnManager.SpawnedObjects.ContainsKey(sceneObject.NetworkObjectId))
             {
                 Debug.LogWarning($"AddSceneObject Trying to spawn {nameof(sceneObject.NetworkObjectId)} {sceneObject.NetworkObjectId} that already exists!");

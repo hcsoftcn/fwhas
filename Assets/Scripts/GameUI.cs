@@ -7,10 +7,12 @@ using UnityEngine.SceneManagement;
 
 public class GameUI : NetworkBehaviour
 {
+    public List<Transform> list=new List<Transform>();
     public NetworkVariable<Room> m_Game = new NetworkVariable<Room>();
     public List<Text> players = new List<Text>();
     public GameObject prefab;
     private Dictionary<ulong,NetworkObject> obj=new Dictionary<ulong, NetworkObject>();
+
     // Start is called before the first frame update
     void Start()
     {
@@ -25,7 +27,7 @@ public class GameUI : NetworkBehaviour
 
     public void UpdatePlayers(Room current)
     {
-        Debug.Log("UpdatePlayers");
+        //Debug.Log("UpdatePlayers");
         for (int i = 0; i < 3; i++)
         {
             players[i].text = "";
@@ -35,7 +37,7 @@ public class GameUI : NetworkBehaviour
         {
             if (current.list[i].sta == Player.status.Play)
             {
-                Debug.Log("UpdatePlayer:"+ current.list[i].user);
+                //Debug.Log("UpdatePlayer:"+ current.list[i].user);
                 players[i].text = current.list[i].user;
             }
         }
@@ -51,9 +53,8 @@ public class GameUI : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
 
-        if (Global.Singleton.net.IsClient)
+        if (IsClient)
         {
-            Debug.Log("GameUI OnNetworkSpawn");
             m_Game.OnValueChanged += OnGameValueChanged;
 
             JoinGameOwnerServerRpc();
@@ -62,7 +63,7 @@ public class GameUI : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        m_Game.OnValueChanged -= OnGameValueChanged;
+        if(IsClient) m_Game.OnValueChanged -= OnGameValueChanged;
     }
 
     public void GameShow(NetworkObject no)
@@ -88,13 +89,16 @@ public class GameUI : NetworkBehaviour
 
                 GameObject ob = GameObject.Instantiate(prefab);//在Active场景创建
                 ob.name = p.user;
-                Debug.LogFormat("Instantiate obj:{0}", ob.scene.name);
                 SceneManager.MoveGameObjectToScene(ob, gameObject.scene);//迁移到当前场景
-                Debug.LogFormat("MoveGameObjectToScene :{0}", gameObject.scene.name);
                 obj.Add(id,ob.GetComponent<NetworkObject>());
-                
                 obj[id].SpawnAsPlayerObject(id,true);
+                
+                obj[id].GetComponent<PlayerControl>().player.Value = p;
+                obj[id].GetComponent<PlayerControl>().player.SetDirty(true);
+                obj[id].transform.localPosition = list[m_Game.Value.GetIndex(id)].localPosition;
+
                 GameShow(obj[id]);
+
                 return true;
             }
         }
@@ -128,12 +132,14 @@ public class GameUI : NetworkBehaviour
 
             GameObject ob = GameObject.Instantiate(prefab);//在Active场景创建
             ob.name = p.user;
-            Debug.LogFormat("Instantiate obj:{0}", ob.scene.name);
             SceneManager.MoveGameObjectToScene(ob, gameObject.scene);//迁移到当前场景
-            Debug.LogFormat("MoveGameObjectToScene :{0}", gameObject.scene.name);
             obj.Add(id, ob.GetComponent<NetworkObject>());
-            
             obj[id].SpawnAsPlayerObject(id,true);
+            
+            obj[id].GetComponent<PlayerControl>().player.Value = p;
+            obj[id].GetComponent<PlayerControl>().player.SetDirty(true);
+            obj[id].transform.localPosition = list[m_Game.Value.GetIndex(id)].localPosition;
+
             GameShow(obj[id]);
 
             m_Game.SetDirty(true);
@@ -152,6 +158,8 @@ public class GameUI : NetworkBehaviour
         Player p = Global.Singleton.players[id];
         p.SetStatus(Player.status.Idle);
         Global.Singleton.players[id] = p;
+
+        obj[id].Despawn();
 
         if (m_Game.Value.list.Count == 0)
             Global.Singleton.net.SceneManager.SvrUnloadScene("Game_"+ m_Game.Value.username);

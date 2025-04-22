@@ -310,12 +310,12 @@ namespace Unity.Netcode
             
             foreach (var sobj in m_networkManager.SpawnManager.SpawnedObjectsList)
             {
-                Debug.LogFormat("AddSpawnedNetworkObjects {0},{1}", sobj.gameObject.scene.name,sobj.gameObject.name);
+                //Debug.LogFormat("AddSpawnedNetworkObjects {0},{1}", sobj.gameObject.scene.name,sobj.gameObject.name);
                 if ((sobj.IsSceneObject != null && sobj.IsSceneObject == false))//&&sobj.Observers.Contains(clientId)
                 {
                     if (sobj.gameObject.scene.name == m_ClientScenes[clientId])
                     {
-                        Debug.LogFormat("AddSpawnedNetworkObjects {0} success", sobj.gameObject.scene.name);
+                        //Debug.LogFormat("AddSpawnedNetworkObjects {0} success", sobj.gameObject.scene.name);
                         m_NetworkObjectsSync.Add(sobj);
                     }
                 }
@@ -348,25 +348,9 @@ namespace Unity.Netcode
                     if (!netobj.IsPlayerObject && netobj.IsSceneObject.HasValue &&  netobj.IsSceneObject.Value && !netobj.IsSpawned)
                     {
                         m_DespawnedInSceneObjectsSync.Add(netobj.GlobalObjectIdHash);
-                        //NetworkObject.SceneObject scobj = netobj.GetMessageSceneObject(clientId);
-                        //scobj.Serialize(writer);
-                        //count++;
                     }
                 }
             }
-
-            //int localSceneHandle = m_SceneNameToHandle[m_ClientScenes[clientId]];
-            //m_DespawnedInSceneObjectsSync.Clear();
-            ////Find all active and non-active in-scene placed NetworkObjects
-            //var inSceneNetworkObjects = UnityEngine.Object.FindObjectsOfType<NetworkObject>(includeInactive: true).Where((c) => c.NetworkManager == m_networkManager&& c.GetSceneOriginHandle() == localSceneHandle);
-
-            //foreach (var sobj in inSceneNetworkObjects)
-            //{
-            //    if (sobj.IsSceneObject.HasValue && sobj.IsSceneObject.Value && !sobj.IsSpawned)
-            //    {
-            //        m_DespawnedInSceneObjectsSync.Add(sobj.GlobalObjectIdHash);
-            //    }
-            //}
         }
 
         //被AddSpawnedNetworkObjects调用
@@ -706,7 +690,7 @@ namespace Unity.Netcode
             if (m_MergeScenes.ContainsKey(m_ClientScenes[clientId]))
             {
                 //发送MergeScene消息
-                Debug.Log("发送MergeScene消息");
+                //Debug.Log("发送MergeScene消息");
                 SceneEventData seData = new SceneEventData();
                 seData.seType = SceneEventType.ClientSceneMerge;
                 seData.targetClientId = clientId;
@@ -812,7 +796,7 @@ namespace Unity.Netcode
                     m_oldLoadScene = m_curLoadScene;
                     m_curLoadScene = seData.sceneName;
                     m_DesScene= SceneManager.CreateScene(seData.sceneName);
-                    Debug.LogFormat("ClientSceneMerge:{0},{1}", seData.sceneName,m_curLoadScene);
+                    //Debug.LogFormat("ClientSceneMerge:{0},{1}", seData.sceneName,m_curLoadScene);
                     AsyncOperation op = SceneManager.LoadSceneAsync(seData.srcScene, LoadSceneMode.Additive);
                     op.completed += OnClientSceneMergeComplete;
                 }
@@ -834,11 +818,11 @@ namespace Unity.Netcode
             Scene sc = SceneManager.GetSceneByName(m_SceneEventDataClientSceneLoad.srcScene);
             SceneManager.MergeScenes(sc,m_DesScene);
             SceneManager.SetActiveScene(m_DesScene);
-            Debug.Log("UnloadScene:"+ m_oldLoadScene);
+            //Debug.Log("UnloadScene:"+ m_oldLoadScene);
             SceneManager.UnloadScene(m_oldLoadScene);
 
             OffsetScene(m_DesScene, m_SceneEventDataClientSceneLoad.offset);
-            Debug.LogFormat("OffsetScene {0} {1}", m_SceneEventDataClientSceneLoad.sceneName, m_SceneEventDataClientSceneLoad.offset);
+            //Debug.LogFormat("OffsetScene {0} {1}", m_SceneEventDataClientSceneLoad.sceneName, m_SceneEventDataClientSceneLoad.offset);
 
             ushort sceneObjectCount;
             m_SceneEventDataClientSceneLoad.InternalBuffer.ReadValueSafe(out sceneObjectCount);
@@ -977,15 +961,15 @@ namespace Unity.Netcode
             ServerSceneEvent e =m_sceneForMergeEvent.Dequeue();
             Scene src=SceneManager.GetSceneByName(e.sceneName);
             SceneManager.MergeScenes(src,e.des);
-            Debug.LogFormat("srcScene:{0},desScene:{1}", e.sceneName, e.desScene);
+            //Debug.LogFormat("srcScene:{0},desScene:{1}", e.sceneName, e.desScene);
             
             OffsetScene(e.des,e.offset);
-            Debug.LogFormat("offset scene {0} {1}",e.desScene,e.offset);
+            //Debug.LogFormat("offset scene {0} {1}",e.desScene,e.offset);
 
             m_MergeScenes.Add(e.desScene, e.sceneName);
-            Debug.LogFormat("Merage scene {0},{1} Completed", e.desScene, e.sceneName);
+            //Debug.LogFormat("Merage scene {0},{1} Completed", e.desScene, e.sceneName);
             int c = SvrSpawnSceneObjects(e.desScene);
-            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", e.desScene, c);
+            //Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", e.desScene, c);
 
             ServerSwitchScene(e.id, e.desScene);
 
@@ -1034,7 +1018,7 @@ namespace Unity.Netcode
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 Scene sc = SceneManager.GetSceneAt(i);
-                Debug.LogFormat("scname:{0} schandle:{1}", sc.name, sc.handle);
+                //Debug.LogFormat("scname:{0} schandle:{1}", sc.name, sc.handle);
                 m_SceneHandleToName.Add(sc.handle, sc.name);
                 m_SceneNameToHandle.Add(sc.name,sc.handle);
             }
@@ -1146,7 +1130,7 @@ namespace Unity.Netcode
         {
             ServerSceneEvent ssEvent=m_sceneEvent.Dequeue();
             if(m_MergeScenes.ContainsKey(ssEvent.sceneName)) m_MergeScenes.Remove(ssEvent.sceneName);
-            Debug.LogFormat("Unload scene {0} Completed", ssEvent.sceneName);
+            //Debug.LogFormat("Unload scene {0} Completed", ssEvent.sceneName);
             m_curSceneEvent = SceneEventType.Idle;
             ProcessServerSceneEvent();
         }
@@ -1155,9 +1139,9 @@ namespace Unity.Netcode
         {
             ServerSceneEvent ssEvent = m_sceneEvent.Dequeue();
 
-            Debug.LogFormat("load scene {0} Completed", ssEvent.sceneName);
+            //Debug.LogFormat("load scene {0} Completed", ssEvent.sceneName);
             int c = SvrSpawnSceneObjects(ssEvent.sceneName);
-            Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", ssEvent.sceneName, c);
+            //Debug.LogFormat("spawn scene {0} Completed, {1} SceneObject Spawned", ssEvent.sceneName, c);
             m_curSceneEvent = SceneEventType.Idle;
             ProcessServerSceneEvent();
         }
@@ -1167,7 +1151,7 @@ namespace Unity.Netcode
             int count = 0;
             Scene sc = SceneManager.GetSceneByName(sceneName);
             if (sc == null || !sc.IsValid()) return count;
-            Debug.LogFormat("SvrSpawnSceneObjects:{0}", sceneName);
+            //Debug.LogFormat("SvrSpawnSceneObjects:{0}", sceneName);
             GameObject[] gameObjects = sc.GetRootGameObjects();
             foreach(var go in gameObjects)
             {

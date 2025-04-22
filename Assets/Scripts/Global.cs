@@ -34,7 +34,7 @@ public class Global : MonoBehaviour
         {
             net.StartServer();
             net.SceneManager.OnServerSceneLoadComplete += OnServerSceneLoadComplete;
-            net.SceneManager.SvrLoadScene("Active");//活动场景，用于创建游戏对象
+            net.SceneManager.SvrLoadScene("Active");//活动空场景，用于创建游戏对象
             net.SceneManager.SvrLoadScene("Main");
             net.SceneManager.SvrLoadScene("Reg");
             net.SceneManager.SvrLoadScene("Lobby");

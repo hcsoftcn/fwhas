@@ -169,6 +169,10 @@ MonoBehaviour:
     m_Localized: Exit Game
     m_Metadata:
       m_Items: []
+  - m_Id: 18508064666812416
+    m_Localized: "press w \u3001a \u3001s \u3001d to move ball"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

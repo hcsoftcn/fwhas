@@ -163,6 +163,10 @@ MonoBehaviour:
     m_Key: game.exit
     m_Metadata:
       m_Items: []
+  - m_Id: 18508064666812416
+    m_Key: game.help
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
