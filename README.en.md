@@ -1,36 +1,5 @@
-# 幻境捉迷藏
-
-#### Description
-一个类似第五人格的联网游戏
-
-#### Software Architecture
-Software architecture description
-
-#### Installation
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Instructions
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Contribution
-
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
-
-
-#### Gitee Feature
-
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+This is a game hall networking template source code engineering file
+The template is developed using Unity 2022.3.53f1c1, references NetCode For GameObjects 1.12.2 package and localization package, and replaces the scene manager in NetCode For GameObjects 1.12.2 package, so that it can easily support online games that open rooms on the Internet.
+Welcome to visit http://www.grgs.cc To obtain more information.
+Grey Rabbit Game Studio
+2025.4.23

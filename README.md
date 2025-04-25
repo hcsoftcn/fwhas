@@ -1,37 +1,9 @@
-# 幻境捉迷藏
+这是一个游戏大厅联网模版源码工程文件
 
-#### 介绍
-一个类似第五人格的联网游戏
+该模版使用Unity 2022.3.53f1c1 开发，引用了NetCode For GameObjects 1.12.2包和本地化包Localization，并且对NetCode For GameObjects 1.12.2包里的场景管理器进行了替换，使之能够轻松支持在互联网上开房间的网络联机游戏。
 
-#### 软件架构
-软件架构说明
+欢迎访问http://www.grgs.cc来获取更多信息。
 
+灰兔游戏工作室
 
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+2025.4.23

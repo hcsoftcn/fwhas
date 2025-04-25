@@ -193,14 +193,13 @@
       "url": "https://packages.unity.cn"
     },
     "com.unity.netcode.gameobjects": {
-      "version": "1.12.2",
+      "version": "file:E:/UnityHub/game/com.unity.netcode.gameobjects-1.12.2.tgz",
       "depth": 0,
-      "source": "registry",
+      "source": "local-tarball",
       "dependencies": {
-        "com.unity.transport": "1.4.0",
-        "com.unity.nuget.mono-cecil": "1.10.1"
-      },
-      "url": "https://packages.unity.cn"
+        "com.unity.nuget.mono-cecil": "1.10.1",
+        "com.unity.transport": "1.4.0"
+      }
     },
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.4",

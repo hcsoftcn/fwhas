@@ -16,12 +16,16 @@ public class PlayerControl : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if(IsClient) player.OnValueChanged += OnPlayerValueChanged;
+        
+    }
+
+    protected override void OnNetworkPostSpawn()
+    {
         if (IsLocalPlayer)
         {
             UpdatePlayerServerRpc();
         }
     }
-
     public override void OnNetworkDespawn()
     {
         if(IsClient) player.OnValueChanged -= OnPlayerValueChanged;
@@ -58,7 +62,7 @@ public class PlayerControl : NetworkBehaviour
     }
     [ServerRpc(RequireOwnership = true)]
     public void UpdatePlayerServerRpc(ServerRpcParams serverRpcParams = default)
-    {
+    { 
         StartCoroutine(DelayedAction());
     }
 
